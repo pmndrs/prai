@@ -1,0 +1,44 @@
+{
+  "name": "prai",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:prettier": "prettier --check src",
+    "check:eslint": "eslint 'src/**/*.{tsx,ts}'",
+    "fix:prettier": "prettier --write src",
+    "fix:eslint": "eslint 'src/**/*.{tsx,ts}' --fix"
+  },
+  "files": [
+    "dist"
+  ],
+  "description": "JS Framework for building step-by-step LLM instructions",
+  "version": "0.0.0",
+  "license": "MIT",
+  "homepage": "https://github.com/pmndrs/prai",
+  "author": "Bela Bohlender",
+  "keywords": [
+    "LLM",
+    "xgrammar",
+    "programmable AI",
+    "prai",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:pmndrs/prai.git"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "imurmurhash": "^0.1.4",
+    "openai": "^4.85.1"
+  },
+  "devDependencies": {
+    "@types/chalk": "^2.2.4",
+    "@types/imurmurhash": "^0.1.4",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.5"
+  }
+}

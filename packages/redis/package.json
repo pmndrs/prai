@@ -1,0 +1,36 @@
+{
+  "name": "@prai/redis",
+  "type": "module",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "redis": "^4.7.0",
+    "prai": "workspace:~"
+  },
+  "scripts": {
+    "build": "tsc",
+    "check:prettier": "prettier --check src",
+    "check:eslint": "eslint 'src/**/*.{tsx,ts}'",
+    "fix:prettier": "prettier --write src",
+    "fix:eslint": "eslint 'src/**/*.{tsx,ts}' --fix"
+  },
+  "description": "redis logging adapter for prai",
+  "version": "0.0.0",
+  "homepage": "https://github.com/pmndrs/prai",
+  "author": "Bela Bohlender",
+  "keywords": [
+    "LLM",
+    "xgrammar",
+    "programmable AI",
+    "prai",
+    "typescript",
+    "redis"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:pmndrs/prai.git"
+  }
+}
