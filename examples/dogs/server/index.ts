@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import { getNamesFoodAndMonthlyCosts } from './dogs.js'
 import { createClient, RedisClientOptions, RedisClientType } from 'redis'
-import { readPraiEvents } from '@prai/redis'
+import { readPraiEvents } from 'prai-redis'
 //@ts-ignore
 import toStream from 'it-to-stream'
 import { encodeAsyncJson } from 'prai'

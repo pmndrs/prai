@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",
-    "@prai/redis": "workspace:~",
+    "prai-redis": "workspace:~",
     "@tailwindcss/vite": "^4.0.13",
     "concurrently": "^9.1.2",
     "fastify": "^5.2.1",

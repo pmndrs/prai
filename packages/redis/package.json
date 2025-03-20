@@ -1,5 +1,5 @@
 {
-  "name": "@prai/redis",
+  "name": "prai-redis",
   "type": "module",
   "main": "dist/index.js",
   "license": "MIT",

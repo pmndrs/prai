@@ -78,9 +78,6 @@ importers:
       '@fastify/cors':
         specifier: ^11.0.0
         version: 11.0.0
-      '@prai/redis':
-        specifier: workspace:~
-        version: link:../../packages/redis
       '@tailwindcss/vite':
         specifier: ^4.0.13
         version: 4.0.13(vite@6.2.1(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.3)(yaml@2.7.0))
@@ -102,6 +99,9 @@ importers:
       prai:
         specifier: workspace:~
         version: link:../../packages/prai
+      prai-redis:
+        specifier: workspace:~
+        version: link:../../packages/redis
       redis:
         specifier: ^4.7.0
         version: 4.7.0

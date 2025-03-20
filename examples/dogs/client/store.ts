@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { StringifiedPraiEvent } from '@prai/redis'
+import type { StringifiedPraiEvent } from 'prai-redis'
 import { produce } from 'immer'
 import { Message } from 'prai'
 

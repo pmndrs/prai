@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "../node_modules/@prai/trace";
+@source "../node_modules/prai-trace";
 
 @layer theme, base, components, utilities;
 

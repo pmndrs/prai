@@ -1,6 +1,6 @@
 import { array, number, object, string, TypeOf } from 'zod'
 import { importJson, leftInnerJoinStep, listStep, mapStep, mock, parseJson, task } from 'prai'
-import { redisLogger } from '@prai/redis'
+import { redisLogger } from 'prai-redis'
 import { RedisClientType } from 'redis'
 
 const schema = array(object({ gender: string(), heightInMeter: number() }))

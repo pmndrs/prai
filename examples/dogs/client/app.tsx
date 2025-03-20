@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, CSSProperties, useRef, ReactNode } from 'react'
-import type { StringifiedPraiEvent } from '@prai/redis'
+import type { StringifiedPraiEvent } from 'prai-redis'
 import { decodeAsyncJson } from 'prai'
 import { usePRaiStore } from './store.js'
 import type { Task, Query, DataImport } from './store'

@@ -97,9 +97,9 @@ console.log(result.value)
 
 - rename data -> resource
 
-- @prai/trace
+- prai-trace
 
-- generic caching implementation + implement this caching with the events already send with @prai/redis which should allow to continue interrupted tasks and allow interrupting a task for a user request + dont jump into task executions if the task result is already computed to safe time (find the steps/tasks in the cache based on their name which is unqiue inside each process)
+- generic caching implementation + implement this caching with the events already send with prai-redis which should allow to continue interrupted tasks and allow interrupting a task for a user request + dont jump into task executions if the task result is already computed to safe time (find the steps/tasks in the cache based on their name which is unqiue inside each process)
 - support abstract multiplexing interface with concrete interface for redis (add a "running" event that the current process owner must send every 10 seconds. After a 20 second timeout all other runners will try to take over the process by sending "alive" the first one to be written into the stream will be the new process owner)
 
 - multi-step (concatenate multiple steps into one llm request e.g. allowing to put a thinking step before another step)
