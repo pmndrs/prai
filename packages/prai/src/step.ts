@@ -5,9 +5,6 @@ import { isAsyncIterable } from './utils.js'
 import { Message } from './connection/openai.js'
 import { randomString } from './random.js'
 
-const DefaultSystemPrompt =
-  'You are a helpful assistant that helps the user through a multi step process while taking references to previous requests into account and exclusively answers in the requested format.'
-
 export function stepResultToString(
   task: Task,
   stepUuid: string,
@@ -84,16 +81,12 @@ function buildStepMessages(
       ],
     },
   ])
-  return [
-    {
-      role: 'system',
-      content: [
-        {
-          type: 'text',
-          text: systemPrompt ?? task.systemPrompt ?? DefaultSystemPrompt,
-        },
-      ],
-    },
+  const messages: Array<Message> = []
+  systemPrompt ??= task.systemPrompt
+  if (systemPrompt != null) {
+    messages.push({ role: 'system', content: [{ type: 'text', text: systemPrompt }] })
+  }
+  messages.push(
     ...endStepContext().reduce<Array<Message>>(
       (prev, current) =>
         current.messages.reduce((acc, msg) => {
@@ -106,7 +99,8 @@ function buildStepMessages(
         }, prev),
       [],
     ),
-  ]
+  )
+  return messages
 }
 
 export type StepFormatOptions = {

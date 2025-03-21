@@ -36,15 +36,14 @@ export function mock(
       const combinedAbortSignal = AbortSignal.any([abortSignal, options.abortSignal].filter((signal) => signal != null))
       const { startupDelaySeconds = 0.2, tokensPerSecond = 50 } = options
       const secondsPerCharacter = 1 / (tokensPerSecond * charactersPerToken)
-      if (stream) {
-        return split(startupDelaySeconds, secondsPerCharacter, string, 'split' + querySeed, combinedAbortSignal)
-      }
       return watchQuery(
         rootTaskName,
         taskName,
         queryName,
         messages,
-        wait(startupDelaySeconds + string.length * secondsPerCharacter, combinedAbortSignal).then(() => string),
+        stream
+          ? split(startupDelaySeconds, secondsPerCharacter, string, 'split' + querySeed, combinedAbortSignal)
+          : wait(startupDelaySeconds + string.length * secondsPerCharacter, combinedAbortSignal).then(() => string),
         dispatchEvent,
       )
     },
