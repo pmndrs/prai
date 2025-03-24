@@ -1,42 +1,44 @@
-import { vllm, task, step, mock } from 'prai'
-import { array, number, object, string, tuple } from 'zod'
+import { runTask, step, mock } from 'prai'
+import { z } from 'zod'
 
 const brandName = `pmndrs`
 const brandDescription = `Open source developer collective`
 
-const colorScheme = tuple([
-  number().describe('hue in degree (0-360)'),
-  number().describe('saturation in percent (0-100)'),
-  number().describe('lightness in percent (0-100)'),
-]).describe('hsl color')
+const colorScheme = z
+  .tuple([
+    z.number().describe('hue in degree (0-360)'),
+    z.number().describe('saturation in percent (0-100)'),
+    z.number().describe('lightness in percent (0-100)'),
+  ])
+  .describe('hsl color')
 
-const result = await task(
+const result = await runTask(
   mock(), //vllm({ baseURL: "...", model: "...", apiKey: "..." }),
   () => `Define a shadcn theme for my brand`,
   async (task) => {
     const adjectives = step(
       task,
       () => `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
-      array(string()),
+      z.array(z.string()),
     )
     const coreTheme = step(
       task,
       () => `Based on the ${adjectives}, derive fitting color theme`,
-      object({
+      z.object({
         background: colorScheme,
         foreground: colorScheme,
         primary: colorScheme,
         secondary: colorScheme,
         accent: colorScheme,
         border: colorScheme,
-        radius: number().describe('radius in rem'),
+        radius: z.number().describe('radius in rem'),
       }),
     )
 
     return step(
       task,
       () => `Expand the ${coreTheme} to a full shadcn theme`,
-      object({
+      z.object({
         background: colorScheme,
         foreground: colorScheme,
         card: colorScheme,
@@ -56,7 +58,7 @@ const result = await task(
         border: colorScheme,
         input: colorScheme,
         ring: colorScheme,
-        radius: number().describe('radius in rem'),
+        radius: z.number().describe('radius in rem'),
       }),
     )
   },

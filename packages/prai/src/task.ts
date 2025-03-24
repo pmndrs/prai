@@ -22,7 +22,7 @@ export type TaskOptions = {
   name?: string
 }
 
-export async function task<T>(
+export async function runTask<T>(
   parentTaskOrConnection: Connection | Task,
   goalPrompt: () => string,
   fn: (task: Task) => Promise<T>,

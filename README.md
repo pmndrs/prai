@@ -17,7 +17,10 @@
   </a>
 </p>
 
-Giving LLMs autonomy can be powerful, but some problems require clear instructions for reliable, correctly formatted results.
+Writing prompts in natural language is great—until they become messy with multiple steps, output format descriptions, and too many lines of text...
+
+With **prai**, prompts become code—structured, maintainable, and debuggable—leading to high-quality, reliable outputs.
+
 
 ```bash
 npm install prai
@@ -35,56 +38,70 @@ We recommend **prai** for problems that are best solved with a structured proces
 ### What does it look like?
 
 ```ts
-import { vllm, task, step } from 'prai'
-import { array, number, object, string, tuple } from 'zod'
+import { vllm, runTask, step } from 'prai'
+import { z } from 'zod'
 
+// 1. Inputs for our theme generation process
 const brandName = `pmndrs`
 const brandDescription = `Open source developer collective`
 
-const result = await task(
-  vllm({ baseURL: '...', model: '...', apiKey: '...' }),
+// 2. Zod schema for a color in hsl - will be given to the LLM as the expected output format
+const colorScheme = z
+  .tuple([
+    z.number().describe('hue in degree (0-360)'),
+    z.number().describe('saturation in percent (0-100)'),
+    z.number().describe('lightness in percent (0-100)'),
+  ])
+  .describe('hsl color')
+
+// 3. Create a connection to an LLM inference engine (vllm / sglang / llama.cpp)
+const connection = vllm({ baseURL: '...', model: '...', apiKey: '...' })
+
+// 4. Run a task
+const result = await runTask(
+  connection,
+  // 5. Define the goal of the task
   () => `Define a shadcn theme for my brand`,
   async (task) => {
+
+    // 6. First step of the task
     const adjectives = step(
       task,
       () => `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
-      array(string()),
+      //7. Enforce a strict schema on the output (a list of strings) - LLM will be forced to comply
+      z.array(z.string()),
     )
+
+    // 8. Second step—generate a basic theme
     const coreTheme = step(
       task,
+      // 9. Reference previous results, adding them to the message history so the LLM sees the full "chain of steps"
       () => `Based on the ${adjectives}, derive fitting color theme`,
-      object({
+      z.object({
         background: colorScheme,
         foreground: colorScheme,
         primary: colorScheme,
         secondary: colorScheme,
         accent: colorScheme,
         border: colorScheme,
-        radius: number().describe('radius in rem'),
+        radius: z.number().describe('radius in rem'),
       }),
     )
 
+    // 10. Final step—expand into a full shadcn theme
     return step(
       task,
       () => `Expand the ${coreTheme} to a full shadcn theme`,
-      object({
+      z.object({
         background: colorScheme,
-        //full scheme in /examples/theme
+        //Full scheme in /examples/theme
       }),
     )
   },
 )
 
-const colorScheme = tuple([
-  number().describe('hue in degree (0-360)'),
-  number().describe('saturation in percent (0-100)'),
-  number().describe('lightness in percent (0-100)'),
-]).describe('hsl color')
-
 console.log(result.value)
 ```
-
-**prai** currently supports the LLM inference engines [vllm](https://github.com/vllm-project/vllm), [llama.cpp](https://github.com/ggml-org/llama.cpp), and [sglang](https://github.com/sgl-project/sglang).
 
 | Concept | Description                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

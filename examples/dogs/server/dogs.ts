@@ -1,5 +1,5 @@
 import { array, number, object, string, TypeOf } from 'zod'
-import { importJson, leftInnerJoinStep, listStep, mapStep, mock, parseJson, task } from 'prai'
+import { importJson, leftInnerJoinStep, listStep, mapStep, mock, parseJson, runTask } from 'prai'
 import { redisLogger } from 'prai-redis'
 import { RedisClientType } from 'redis'
 
@@ -16,11 +16,11 @@ export async function getNamesFoodAndMonthlyCosts(
   const endpoint = mock({ abortSignal: options?.abort })
   redisLogger(nonSubClient, endpoint)
 
-  const result = await task(
+  const result = await runTask(
     endpoint,
     () => `find names, food, and monthly costs for my dogs`,
     async (rootTask) => {
-      const dogNames = await task(
+      const dogNames = await runTask(
         rootTask,
         () => `find good names for my dogs.`,
         async (task) => {
@@ -41,7 +41,7 @@ export async function getNamesFoodAndMonthlyCosts(
         },
       )
 
-      const dogsWithFood = await task(
+      const dogsWithFood = await runTask(
         rootTask,
         () => `find good food for my dogs.`,
         async (task) => {
@@ -57,7 +57,7 @@ export async function getNamesFoodAndMonthlyCosts(
         },
       )
 
-      return await task(
+      return await runTask(
         rootTask,
         () => `estimate the monthly food cost of each of my dogs.`,
         async (task) => {
