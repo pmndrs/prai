@@ -42,6 +42,8 @@ export function htmlStep(
   queryPrompt: () => string,
   options: Omit<StreamingStepOptions, 'format'> & {
     tags?: HtmlTagsSchema
+    prefixGrammar?: string
+    suffixGrammar?: string
   },
 ): StreamingStepData<string, string>
 
