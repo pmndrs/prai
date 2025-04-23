@@ -22,27 +22,66 @@ export type JsonSchema =
        * all fields must be required
        */
       required: Array<string>
+      $defs?: Record<string, JsonSchema>
     }
-  | { type: 'string'; description?: string; enum?: Array<string> }
+  | { type: 'string'; description?: string; enum?: Array<string>; $defs?: Record<string, JsonSchema> }
   | {
       type: 'number' | 'boolean' | 'integer'
       description?: string
+      $defs?: Record<string, JsonSchema>
     }
   | {
       type: 'array'
       description?: string
       items?: JsonSchema
+      $def?: Record<string, JsonSchema>
+      $defs?: Record<string, JsonSchema>
     }
-  | { type: 'null' }
+  | { type: 'null'; $defs?: Record<string, JsonSchema> }
   | {
       anyOf: Array<JsonSchema>
-      description?: string
+      $defs?: Record<string, JsonSchema>
+    }
+  | {
+      $ref: string
+      $defs?: Record<string, JsonSchema>
     }
 
-export function buildJsonSchema(schema: Schema): JsonSchema {
-  //TODO: support recursion!
+export function buildJsonSchema(schema: Schema) {
+  const referenceMap = new Map<Schema, string>()
+  const definitionMap = new Map<Schema, string>()
+  const counter = { current: 1 }
+  const result = buildJsonSchemaRec(schema, referenceMap, definitionMap, counter, true)
+  result.$defs = {}
+  for (const [reusedSchema, name] of definitionMap.entries()) {
+    result.$defs[name] = buildJsonSchemaRec(reusedSchema, referenceMap, definitionMap, counter)
+  }
+  return result
+}
+
+function buildJsonSchemaRec(
+  schema: Schema,
+  referenceMap: Map<Schema, string>,
+  definitionMap: Map<Schema, string>,
+  counter: { current: number },
+  isRoot = false,
+): JsonSchema {
+  const reference = referenceMap.get(schema)
+  if (reference != null) {
+    return { $ref: reference }
+  }
   if (schema instanceof ZodLazy) {
-    return buildJsonSchema(schema.schema)
+    if (isRoot) {
+      referenceMap.set(schema, '#')
+      return buildJsonSchemaRec(schema.schema, referenceMap, definitionMap, counter)
+    }
+    const name = `definition_${counter.current++}`
+    definitionMap.set(schema.schema, name)
+    const reference = `#/$defs/${name}`
+    referenceMap.set(schema, reference)
+    return {
+      $ref: reference,
+    }
   }
   if (schema instanceof ZodLiteral) {
     return {
@@ -53,8 +92,7 @@ export function buildJsonSchema(schema: Schema): JsonSchema {
   }
   if (schema instanceof ZodNullable) {
     return {
-      anyOf: [buildJsonSchema(schema.unwrap()), { type: 'null' }],
-      description: schema.description,
+      anyOf: [buildJsonSchemaRec(schema.unwrap(), referenceMap, definitionMap, counter), { type: 'null' }],
     }
   }
   if (schema instanceof ZodUnion) {
@@ -67,7 +105,7 @@ export function buildJsonSchema(schema: Schema): JsonSchema {
         throw new Error(`Union options must be objects`)
       }
       for (const key in option.shape) {
-        properties[key] = buildJsonSchema(option.shape[key])
+        properties[key] = buildJsonSchemaRec(option.shape[key], referenceMap, definitionMap, counter)
       }
     }
     return {
@@ -80,13 +118,16 @@ export function buildJsonSchema(schema: Schema): JsonSchema {
   }
   if (schema instanceof ZodIntersection) {
     return {
-      anyOf: [schema._def.left, schema._def.right],
+      anyOf: [
+        buildJsonSchemaRec(schema._def.left, referenceMap, definitionMap, counter),
+        buildJsonSchemaRec(schema._def.right, referenceMap, definitionMap, counter),
+      ],
     }
   }
   if (schema instanceof ZodObject) {
     const properties: any = {}
     for (const key in schema.shape) {
-      properties[key] = buildJsonSchema(schema.shape[key])
+      properties[key] = buildJsonSchemaRec(schema.shape[key], referenceMap, definitionMap, counter)
     }
     return {
       type: 'object',
@@ -118,7 +159,7 @@ export function buildJsonSchema(schema: Schema): JsonSchema {
     return {
       type: 'array',
       description: schema.description,
-      items: buildJsonSchema(schema.element),
+      items: buildJsonSchemaRec(schema.element, referenceMap, definitionMap, counter),
     }
   }
   throw new Error(`Unsupported schema type: ${schema.constructor.name}`)

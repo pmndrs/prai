@@ -1,273 +1,257 @@
-import { describe, it, expect } from "vitest";
-import {
-  encodeAsyncJson,
-  decodeAsyncJson,
-  createAsyncState,
-} from "../src/async-json";
-import { StreamingStepData } from "../src/data";
-import { isAsyncIterable } from "../src/utils.js";
+import { describe, it, expect } from 'vitest'
+import { encodeAsyncJson, decodeAsyncJson, createAsyncState } from '../src/async-json.js'
+import { StreamingStepData } from '../src/data.js'
 
-describe("async-json", () => {
-  describe("encodeAsyncJson and decodeAsyncJson", () => {
-    it("should encode and decode basic JSON without async iterables", async () => {
+describe('async-json', () => {
+  describe('encodeAsyncJson and decodeAsyncJson', () => {
+    it('should encode and decode basic JSON without async iterables', async () => {
       const data = {
-        string: "hello",
+        string: 'hello',
         number: 42,
         boolean: true,
         null: null,
         array: [1, 2, 3],
         nested: { a: 1, b: 2 },
-      };
+      }
 
-      const encoded = encodeAsyncJson(data);
-      const decoded = await decodeAsyncJson<typeof data>(
-        encoded,
-        new AbortController().signal
-      );
+      const encoded = encodeAsyncJson(data)
+      const decoded = await decodeAsyncJson<typeof data>(encoded, new AbortController().signal)
 
-      expect(decoded).toEqual(data);
-    });
+      expect(decoded).toEqual(data)
+    })
 
-    it("should encode and decode JSON with async iterables", async () => {
-      const state1 = createAsyncState("value1");
-      const state2 = createAsyncState(42);
+    it('should encode and decode JSON with async iterables', async () => {
+      const state1 = createAsyncState('value1')
+      const state2 = createAsyncState(42)
 
       const data = {
         field1: state1,
         nested: {
           field2: state2,
         },
-      };
+      }
 
-      const encoded = encodeAsyncJson(data);
+      const encoded = encodeAsyncJson(data)
       const decoded = await decodeAsyncJson<{
-        field1: StreamingStepData<string, string>;
+        field1: StreamingStepData<string, string>
         nested: {
-          field2: StreamingStepData<number, number>;
-        };
-      }>(encoded, new AbortController().signal);
+          field2: StreamingStepData<number, number>
+        }
+      }>(encoded, new AbortController().signal)
 
       // Check that the decoded values match the original states
       for await (const value of decoded.field1) {
-        expect(value).toBe("value1");
-        break;
+        expect(value).toBe('value1')
+        break
       }
 
       for await (const value of decoded.nested.field2) {
-        expect(value).toBe(42);
-        break;
+        expect(value).toBe(42)
+        break
       }
-    });
+    })
 
-    it("should handle updates to async states during streaming", async () => {
-      const state = createAsyncState(1);
-      const data = { counter: state };
+    it('should handle updates to async states during streaming', async () => {
+      const state = createAsyncState(1)
+      const data = { counter: state }
 
-      const encoded = encodeAsyncJson(data);
-      const abortController = new AbortController();
+      const encoded = encodeAsyncJson(data)
+      const abortController = new AbortController()
       const decoded = await decodeAsyncJson<{
-        counter: StreamingStepData<number, number>;
-      }>(encoded, abortController.signal);
+        counter: StreamingStepData<number, number>
+      }>(encoded, abortController.signal)
 
-      const values: number[] = [];
+      const values: number[] = []
       const done = new Promise<void>(async (resolve) => {
         for await (const value of decoded.counter) {
-          values.push(value);
+          values.push(value)
           if (values.length === 2) {
-            resolve();
-            break;
+            resolve()
+            break
           }
         }
-      });
+      })
 
       // Update the state
-      state.set(2);
-      await done;
+      state.set(2)
+      await done
 
-      expect(values).toEqual([1, 2]);
-    });
+      expect(values).toEqual([1, 2])
+    })
 
-    it("should handle abort signal", async () => {
-      const state = createAsyncState("test");
-      const data = { value: state };
+    it('should handle abort signal', async () => {
+      const state = createAsyncState('test')
+      const data = { value: state }
 
-      const encoded = encodeAsyncJson(data);
-      const abortController = new AbortController();
+      const encoded = encodeAsyncJson(data)
+      const abortController = new AbortController()
       const decoded = await decodeAsyncJson<{
-        value: StreamingStepData<string, string>;
-      }>(encoded, abortController.signal);
+        value: StreamingStepData<string, string>
+      }>(encoded, abortController.signal)
 
       const iterationPromise = (async () => {
         for await (const _ of decoded.value) {
           // Should not get here after abort
         }
-      })();
+      })()
 
       // Abort after a small delay
-      setTimeout(() => abortController.abort(), 10);
+      setTimeout(() => abortController.abort(), 10)
 
-      await expect(iterationPromise).resolves.toBeUndefined();
-    });
+      await expect(iterationPromise).resolves.toBeUndefined()
+    })
 
-    it("should throw error on malformed input", async () => {
+    it('should throw error on malformed input', async () => {
       async function* malformedGenerator() {
-        yield "invalid json";
-        yield "more invalid data";
+        yield 'invalid json'
+        yield 'more invalid data'
       }
 
-      await expect(
-        decodeAsyncJson(malformedGenerator(), new AbortController().signal)
-      ).rejects.toThrow();
-    });
+      await expect(decodeAsyncJson(malformedGenerator(), new AbortController().signal)).rejects.toThrow()
+    })
 
-    it("should handle multiple async iterables updating in parallel", async () => {
-      const state1 = createAsyncState(1);
-      const state2 = createAsyncState("a");
-      const data = { num: state1, str: state2 };
+    it('should handle multiple async iterables updating in parallel', async () => {
+      const state1 = createAsyncState(1)
+      const state2 = createAsyncState('a')
+      const data = { num: state1, str: state2 }
 
-      const encoded = encodeAsyncJson(data);
+      const encoded = encodeAsyncJson(data)
       const decoded = await decodeAsyncJson<{
-        num: StreamingStepData<number, number>;
-        str: StreamingStepData<string, string>;
-      }>(encoded, new AbortController().signal);
+        num: StreamingStepData<number, number>
+        str: StreamingStepData<string, string>
+      }>(encoded, new AbortController().signal)
 
-      const values1: number[] = [];
-      const values2: string[] = [];
+      const values1: number[] = []
+      const values2: string[] = []
 
       const done = Promise.all([
         (async () => {
           for await (const value of decoded.num) {
-            values1.push(value);
+            values1.push(value)
           }
         })(),
         (async () => {
           for await (const value of decoded.str) {
-            values2.push(value);
+            values2.push(value)
           }
         })(),
-      ]);
+      ])
 
-      state1.set(2);
-      state2.set("b");
-      state1.finish();
-      state2.finish();
+      state1.set(2)
+      state2.set('b')
+      state1.finish()
+      state2.finish()
 
-      await done;
-      expect(values1).toEqual([1, 2]);
-      expect(values2).toEqual(["a", "b"]);
-    });
+      await done
+      expect(values1).toEqual([1, 2])
+      expect(values2).toEqual(['a', 'b'])
+    })
 
-    it("should handle nested arrays with async iterables", async () => {
-      const state1 = createAsyncState(1);
-      const state2 = createAsyncState(2);
+    it('should handle nested arrays with async iterables', async () => {
+      const state1 = createAsyncState(1)
+      const state2 = createAsyncState(2)
       const data = {
         array: [state1, state2],
-      };
+      }
 
-      const encoded = encodeAsyncJson(data);
+      const encoded = encodeAsyncJson(data)
       const decoded = await decodeAsyncJson<{
-        array: [
-          StreamingStepData<number, number>,
-          StreamingStepData<number, number>
-        ];
-      }>(encoded, new AbortController().signal);
+        array: [StreamingStepData<number, number>, StreamingStepData<number, number>]
+      }>(encoded, new AbortController().signal)
 
-      const values1: number[] = [];
-      const values2: number[] = [];
+      const values1: number[] = []
+      const values2: number[] = []
 
       for await (const value of decoded.array[0]) {
-        values1.push(value);
-        break;
+        values1.push(value)
+        break
       }
 
       for await (const value of decoded.array[1]) {
-        values2.push(value);
-        break;
+        values2.push(value)
+        break
       }
 
-      expect(values1).toEqual([1]);
-      expect(values2).toEqual([2]);
-    });
+      expect(values1).toEqual([1])
+      expect(values2).toEqual([2])
+    })
 
-    it("should handle early termination of async iterables", async () => {
-      const state = createAsyncState(1);
-      const data = { value: state };
+    it('should handle early termination of async iterables', async () => {
+      const state = createAsyncState(1)
+      const data = { value: state }
 
-      const encoded = encodeAsyncJson(data);
-      const abortController = new AbortController();
+      const encoded = encodeAsyncJson(data)
+      const abortController = new AbortController()
       const decoded = await decodeAsyncJson<{
-        value: StreamingStepData<number, number>;
-      }>(encoded, abortController.signal);
+        value: StreamingStepData<number, number>
+      }>(encoded, abortController.signal)
 
-      const values: number[] = [];
+      const values: number[] = []
       for await (const value of decoded.value) {
-        values.push(value);
-        break; // Early termination
+        values.push(value)
+        break // Early termination
       }
 
       // Update after breaking from the loop
-      state.set(2);
-      state.set(3);
+      state.set(2)
+      state.set(3)
 
-      expect(values).toEqual([1]);
-    });
-  });
-  it("should handle basic encoding and decoding", async () => {
-    const data = { value: "test" };
-    const encoded = encodeAsyncJson(data);
-    const decoded = await decodeAsyncJson(
-      encoded,
-      new AbortController().signal
-    );
-    expect(decoded).toEqual(data);
-  });
+      expect(values).toEqual([1])
+    })
+  })
+  it('should handle basic encoding and decoding', async () => {
+    const data = { value: 'test' }
+    const encoded = encodeAsyncJson(data)
+    const decoded = await decodeAsyncJson(encoded, new AbortController().signal)
+    expect(decoded).toEqual(data)
+  })
 
-  it("should handle merged chunks", async () => {
-    const state = createAsyncState("initial");
-    const data = { value: state };
+  it('should handle merged chunks', async () => {
+    const state = createAsyncState('initial')
+    const data = { value: state }
 
     // Get the encoded stream
-    const encodedStream = encodeAsyncJson(data);
+    const encodedStream = encodeAsyncJson(data)
 
     // Create a new stream that merges chunks
     async function* mergeChunks(): AsyncIterable<string> {
-      let buffer = "";
-      let i = 0;
+      let buffer = ''
+      let i = 0
       for await (const chunk of encodedStream) {
-        buffer += chunk;
-        i++;
+        buffer += chunk
+        i++
         // Only yield after accumulating multiple chunks
         if (i >= 2) {
-          i = 0;
-          yield buffer;
-          buffer = "";
+          i = 0
+          yield buffer
+          buffer = ''
         }
       }
       if (buffer.length > 0) {
-        yield buffer;
+        yield buffer
       }
     }
 
     // Decode the merged stream
     const decoded = await decodeAsyncJson<{
-      value: AsyncIterable<string>;
-    }>(mergeChunks(), new AbortController().signal);
+      value: AsyncIterable<string>
+    }>(mergeChunks(), new AbortController().signal)
 
     // Verify the initial value
-    const values: string[] = [];
+    const values: string[] = []
     const done = new Promise<void>(async (resolve) => {
       for await (const value of decoded.value) {
-        values.push(value);
+        values.push(value)
       }
-      resolve();
-    }).catch(console.error);
+      resolve()
+    }).catch(console.error)
 
     // Update the state
-    state.set("updated");
-    state.finish();
+    state.set('updated')
+    state.finish()
 
-    await done;
+    await done
 
-    expect(values).toEqual(["initial", "updated"]);
-  });
-});
+    expect(values).toEqual(['initial', 'updated'])
+  })
+})

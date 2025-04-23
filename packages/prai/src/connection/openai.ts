@@ -1,20 +1,15 @@
 import { ClientOptions } from 'openai'
 import { base } from './base.js'
 import { buildJsonSchema } from '../schema/json.js'
+import { object, ZodObject, ZodUnion } from 'zod'
 
 export const openai = base.bind(
   null,
   (schema) => {
-    let jsonSchema = buildJsonSchema(schema)
-    if ('anyOf' in jsonSchema || jsonSchema.type != 'object') {
-      jsonSchema = {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          response: jsonSchema,
-        },
-        required: ['response'],
-      }
+    if (!(schema instanceof ZodObject || schema instanceof ZodUnion)) {
+      schema = object({
+        response: schema,
+      })
     }
     return {
       response_format: {
@@ -22,7 +17,7 @@ export const openai = base.bind(
         json_schema: {
           name: 'response_schema',
           strict: true,
-          schema: jsonSchema,
+          schema: buildJsonSchema(schema),
         },
       },
     }
