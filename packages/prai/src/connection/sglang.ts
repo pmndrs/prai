@@ -1,3 +1,3 @@
-import { openai } from './openai.js'
+import { base } from './base.js'
 
-export const sglang = openai.bind(null, 'ebnf')
+//export const sglang = base.bind(null, 'ebnf')

@@ -1,3 +1,3 @@
-import { openai } from './openai.js'
+import { base } from './base.js'
 
-export const vllm = openai.bind(null, 'guided_grammar')
+//export const vllm = base.bind(null, 'guided_grammar')

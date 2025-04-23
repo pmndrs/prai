@@ -1,4 +1,4 @@
-import type { Connection, Message } from './openai.js'
+import type { Message } from './base.js'
 
 export type PraiEventMap = {
   'data-import': DataImportEvent

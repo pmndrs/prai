@@ -1,4 +1,4 @@
-import { Message } from './connection/openai.js'
+import { Message } from './connection/base.js'
 import { Task } from './task.js'
 
 export type StepDependencies = Array<{

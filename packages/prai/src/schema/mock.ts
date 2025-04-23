@@ -39,6 +39,7 @@ export function createSchemaMock<T>(schema: Schema<T>, seed: string): T {
     if (!Array.isArray(schema.options)) {
       throw new Error(`the options in the union schema must be in an array`)
     }
+    throw new Error(`not implemented`)
   }
   if (schema instanceof ZodIntersection) {
     return {

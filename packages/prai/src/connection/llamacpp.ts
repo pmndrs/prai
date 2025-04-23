@@ -1,3 +1,3 @@
-import { openai } from './openai.js'
+import { base } from './base.js'
 
-export const llamacpp = openai.bind(null, 'grammar')
+//export const llamacpp = base.bind(null, 'grammar')

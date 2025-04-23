@@ -1,7 +1,7 @@
 import { APIUserAbortError } from 'openai'
 import { randomInt } from '../random.js'
 import { buildEventEmitter, watchQuery } from './event.js'
-import { Connection } from './openai.js'
+import { Connection } from './base.js'
 
 const charactersPerToken = 3
 

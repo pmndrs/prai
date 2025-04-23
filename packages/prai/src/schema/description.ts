@@ -12,9 +12,6 @@ import {
   ZodArray,
   ZodRecord,
   ZodTuple,
-  ZodEnum,
-  ZodNullable,
-  ZodAny,
 } from 'zod'
 import { joinStrings } from '../utils.js'
 import { addOptional, addDescription } from './utils.js'

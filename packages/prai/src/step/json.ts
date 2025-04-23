@@ -6,10 +6,6 @@ import { isAsyncIterable } from '../utils.js'
 import { StepData, StreamingStepData } from '../data.js'
 import { createSchemaMock } from '../schema/mock.js'
 
-function buildJsonFormatDescription(schema: Schema) {
-  return `a json without any whitespace as ${buildSchemaDescription(schema)}`
-}
-
 export const step = jsonStep
 
 export async function jsonStep<T>(
@@ -26,10 +22,7 @@ export async function jsonStep<T>(
       reason,
     })),
     mock: (seed) => JSON.stringify(createSchemaMock(schema, seed)),
-    format: {
-      description: buildJsonFormatDescription(schema),
-      grammar: buildSchemaGrammar(schema),
-    },
+    schema,
   })
   return string.setValue<T>(JSON.parse(string.value), schema)
 }
@@ -75,10 +68,7 @@ export function jsonArrayStep<T>(
       output: typeof output === 'string' ? output : JSON.stringify(output),
       reason,
     })),
-    format: {
-      description: buildJsonFormatDescription(schema),
-      grammar: buildSchemaGrammar(schema),
-    },
+    schema,
     mock: (seed) => JSON.stringify(createSchemaMock(schema, seed)),
   } satisfies StreamingStepOptions | NonStreamingStepOptions)
   if (!isAsyncIterable(asyncString)) {
@@ -147,10 +137,7 @@ export function jsonRecordStep<T>(
       output: JSON.stringify(output),
       reason,
     })),
-    format: {
-      description: buildJsonFormatDescription(schema),
-      grammar: buildSchemaGrammar(schema),
-    },
+    schema,
     mock: (seed) => JSON.stringify(createSchemaMock(schema, seed)),
   } satisfies StreamingStepOptions | NonStreamingStepOptions)
   if (!isAsyncIterable(asyncString)) {

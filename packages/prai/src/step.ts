@@ -2,8 +2,10 @@ import { addStepMessagesToDependencies, getCurrentTaskUuid, startStepContext, St
 import { Task } from './task.js'
 import { createStreamingStepData, Data, StepData, StreamingStepData } from './data.js'
 import { isAsyncIterable } from './utils.js'
-import { Message } from './connection/openai.js'
+import { Message } from './connection/base.js'
 import { randomString } from './random.js'
+import { Schema } from 'zod'
+import { buildSchemaDescription } from './schema/description.js'
 
 export function stepResultToString(
   task: Task,
@@ -103,13 +105,8 @@ function buildStepMessages(
   return messages
 }
 
-export type StepFormatOptions = {
-  grammar?: string
-  description?: string
-}
-
 type StepOptions<ExampleInput = string, ExampleOutput = string> = {
-  format?: StepFormatOptions
+  schema?: Schema
   examples?: Array<{
     input: ExampleInput
     output: ExampleOutput
@@ -153,11 +150,12 @@ export function stringStep(
 export function stringStep(task: Task, prompt: () => string, options?: NonStreamingStepOptions | StreamingStepOptions) {
   const stepName = options?.name ?? crypto.randomUUID()
   const endStepContext = startStepContext(task.name)
+  const schemaDescription = options?.schema == null ? undefined : `a json as ${buildSchemaDescription(options.schema)}`
   const messages = buildStepMessages(
     task,
     stepName,
     prompt,
-    options?.format?.description,
+    schemaDescription,
     options?.examples,
     endStepContext,
     options?.systemPrompt,
@@ -169,13 +167,13 @@ export function stringStep(task: Task, prompt: () => string, options?: NonStream
     messages,
     options?.stream ?? false,
     options?.mock ?? mockStringStep,
-    options?.format?.grammar,
+    options?.schema,
     options?.abortSignal,
   )
   if (isAsyncIterable(result)) {
-    return createStreamingStepData(result, task, stepName, prompt, options?.format?.description, collectStreamingString)
+    return createStreamingStepData(result, task, stepName, prompt, schemaDescription, collectStreamingString)
   }
-  return result.then((value) => new StepData(value, task, stepName, prompt, options?.format?.description))
+  return result.then((value) => new StepData(value, task, stepName, prompt, schemaDescription))
 }
 
 function mockStringStep(seed: string): string {

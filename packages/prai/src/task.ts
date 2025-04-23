@@ -1,5 +1,5 @@
 import { APIUserAbortError } from 'openai'
-import { Connection } from './connection/openai.js'
+import { Connection } from './connection/base.js'
 import { isData } from './data.js'
 import { TaskStartEvent } from './connection/event.js'
 
