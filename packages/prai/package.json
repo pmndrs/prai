@@ -35,6 +35,9 @@
     "imurmurhash": "^0.1.4",
     "openai": "^4.85.1"
   },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
   "devDependencies": {
     "@types/chalk": "^2.2.4",
     "@types/imurmurhash": "^0.1.4",
