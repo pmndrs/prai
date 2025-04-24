@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { z } from 'zod'
+import { union, z } from 'zod'
 import { buildJsonSchema, JsonSchema } from '../src/schema/json.js'
 import * as schemaModule from '../src/schema/json.js'
 
@@ -111,7 +111,7 @@ describe('schema-json', () => {
   it('should handle union of object types', () => {
     const userSchema = z.object({ userId: z.string(), name: z.string() })
     const adminSchema = z.object({ adminId: z.string(), permissions: z.array(z.string()) })
-    const schema = z.union([userSchema, adminSchema])
+    const schema = z.intersection(userSchema, adminSchema)
 
     expect(buildJsonSchema(schema)).toEqual({
       type: 'object',
@@ -133,7 +133,7 @@ describe('schema-json', () => {
   it('should handle intersection types', () => {
     const baseSchema = z.object({ id: z.string() })
     const extendedSchema = z.object({ name: z.string() })
-    const schema = baseSchema.and(extendedSchema)
+    const schema = union([baseSchema, extendedSchema])
 
     expect(buildJsonSchema(schema)).toEqual({
       anyOf: [
@@ -231,7 +231,7 @@ describe('schema-json', () => {
       })
 
       // Create a union (only supports object types)
-      const accountSchema = z.union([userSchema, adminSchema])
+      const accountSchema = z.intersection(userSchema, adminSchema)
 
       const result = buildJsonSchema(accountSchema)
 

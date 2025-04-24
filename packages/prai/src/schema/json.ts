@@ -11,6 +11,7 @@ import {
   ZodString,
   ZodUnion,
 } from 'zod'
+import { flattenIntersections } from './utils.js'
 
 export type JsonSchema =
   | {
@@ -95,17 +96,15 @@ function buildJsonSchemaRec(
       anyOf: [buildJsonSchemaRec(schema.unwrap(), referenceMap, definitionMap, counter), { type: 'null' }],
     }
   }
-  if (schema instanceof ZodUnion) {
+  if (schema instanceof ZodIntersection) {
     const properties: any = {}
-    if (!Array.isArray(schema.options)) {
-      throw new Error(`the options in the union schema must be in an array`)
-    }
-    for (const option of schema.options) {
-      if (!(option instanceof ZodObject)) {
+    const intersections = flattenIntersections(schema)
+    for (const intersection of intersections) {
+      if (!(intersection instanceof ZodObject)) {
         throw new Error(`Union options must be objects`)
       }
-      for (const key in option.shape) {
-        properties[key] = buildJsonSchemaRec(option.shape[key], referenceMap, definitionMap, counter)
+      for (const key in intersection.shape) {
+        properties[key] = buildJsonSchemaRec(intersection.shape[key], referenceMap, definitionMap, counter)
       }
     }
     return {
@@ -116,9 +115,12 @@ function buildJsonSchemaRec(
       description: schema.description,
     }
   }
-  if (schema instanceof ZodIntersection) {
+  if (schema instanceof ZodUnion) {
+    if (!Array.isArray(schema.options)) {
+      throw new Error(`the options in the union schema must be in an array`)
+    }
     return {
-      anyOf: flattenIntersections(schema).map((intersectedSchema) =>
+      anyOf: schema.options.map((intersectedSchema) =>
         buildJsonSchemaRec(intersectedSchema, referenceMap, definitionMap, counter),
       ),
     }
@@ -162,11 +164,4 @@ function buildJsonSchemaRec(
     }
   }
   throw new Error(`Unsupported schema type: ${schema.constructor.name}`)
-}
-
-function flattenIntersections(schema: Schema): Array<Schema> {
-  if (!(schema instanceof ZodIntersection)) {
-    return [schema]
-  }
-  return [...flattenIntersections(schema._def.left), ...flattenIntersections(schema._def.right)]
 }

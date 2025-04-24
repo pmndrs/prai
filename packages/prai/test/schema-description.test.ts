@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { buildSchemaDescription } from '../src/index.js'
-import { object, lazy, Schema, string, number, boolean, array, literal, union, optional, record, tuple } from 'zod'
+import {
+  object,
+  lazy,
+  Schema,
+  string,
+  number,
+  boolean,
+  array,
+  literal,
+  union,
+  optional,
+  record,
+  tuple,
+  intersection,
+} from 'zod'
 
 type X = {
   x?: X
@@ -152,7 +166,7 @@ describe('schema description', () => {
   it('should describe intersection of objects', () => {
     const personSchema = object({ name: string(), age: number() })
     const employeeSchema = object({ company: string(), salary: number() })
-    const schema = personSchema.and(employeeSchema)
+    const schema = intersection(personSchema, employeeSchema)
 
     expect(buildSchemaDescription(schema)).to.equal(
       'an object with the fields "name" which is a string, "age" which is a number, "company" which is a string, and "salary" which is a number',

@@ -14,7 +14,7 @@ import {
   ZodTuple,
 } from 'zod'
 import { joinStrings } from '../utils.js'
-import { addOptional, addDescription } from './utils.js'
+import { addOptional, addDescription, flattenIntersections } from './utils.js'
 
 export function buildSchemaDescription(
   schema: Schema,
@@ -103,17 +103,18 @@ export function buildSchemaDescriptionRec(
     )}boolean${plural ? 's' : ''}${addDescription(schema)}`
   }
   if (schema instanceof ZodIntersection) {
-    if (!(schema._def.left instanceof ZodObject) || !(schema._def.right instanceof ZodObject)) {
-      throw new Error(`unsupported schema type`)
+    const intersections = flattenIntersections(schema)
+    const unsupportedSchema = intersections.find((intersectionSchema) => !(intersectionSchema instanceof ZodObject))
+    if (unsupportedSchema != null) {
+      throw new Error(
+        `unsupported schema type "${unsupportedSchema.constructor.name}" inside intersection. Only objects allowed.`,
+      )
     }
-    return buildObjectSchemaDescriptionFromShape(
-      schema,
-      Object.entries<Schema>(schema._def.left.shape).concat(Object.entries<Schema>(schema._def.right.shape)),
-      specifc,
-      plural,
-      optional,
-      state,
+    const entries = (intersections as Array<ZodObject<any>>).reduce<Array<[string, Schema]>>(
+      (prev, intersectionSchema) => prev.concat(Object.entries(intersectionSchema.shape)),
+      [],
     )
+    return buildObjectSchemaDescriptionFromShape(schema, entries, specifc, plural, optional, state)
   }
   if (schema instanceof ZodObject) {
     return buildObjectSchemaDescriptionFromShape(
@@ -132,7 +133,7 @@ export function buildSchemaDescriptionRec(
       plural,
     )}${addDescription(schema)} containing ${buildSchemaDescriptionRec(schema.element, false, true, false, state)}`
   }
-  throw new Error(`unsupported schema type`)
+  throw new Error(`unsupported schema type "${schema.constructor.name}"`)
 }
 
 function buildObjectSchemaDescriptionFromShape(
@@ -233,8 +234,15 @@ function buildReusedSchemaNameMapRec(
     return
   }
   if (schema instanceof ZodIntersection) {
-    if (!(schema._def.left instanceof ZodObject) || !(schema._def.right instanceof ZodObject)) {
-      throw new Error(`unsupported schema type`)
+    if (!(schema._def.left instanceof ZodObject)) {
+      throw new Error(
+        `unsupported schema type "${schema._def.left.constructor.name}". Only object supported in intersection.`,
+      )
+    }
+    if (!(schema._def.right instanceof ZodObject)) {
+      throw new Error(
+        `unsupported schema type "${schema._def.right.constructor.name}". Only object supported in intersection.`,
+      )
     }
     buildReusedSchemaNameMapRec(schema._def.left, state)
     buildReusedSchemaNameMapRec(schema._def.right, state)

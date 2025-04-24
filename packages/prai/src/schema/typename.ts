@@ -1,5 +1,11 @@
 import {
+  infer,
+  number,
+  object,
   Schema,
+  string,
+  TypeOf,
+  union,
   ZodArray,
   ZodBoolean,
   ZodIntersection,
@@ -69,5 +75,5 @@ export function buildSchemaTypename(schema: Schema): string {
   if (schema instanceof ZodArray) {
     return `Array<${buildSchemaTypename(schema.element)}>`
   }
-  throw new Error(`unsupported schema type`)
+  throw new Error(`unsupported schema type "${schema.constructor.name}"`)
 }

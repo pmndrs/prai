@@ -14,7 +14,7 @@ import {
   ZodUnion,
 } from 'zod'
 import { buildSchemaDescription } from './description.js'
-import { addOptional } from './utils.js'
+import { addOptional, flattenIntersections } from './utils.js'
 
 export type ToSchemaInstance<T> = T extends object
   ? { [Key in keyof T]: ToSchemaInstance<T[Key]> }
@@ -116,11 +116,16 @@ export function buildSchemaInstance<T>(
     )
   }
   if (schema instanceof ZodIntersection) {
-    if (!(schema._def.left instanceof ZodObject) || !(schema._def.right instanceof ZodObject)) {
-      throw new Error(`unsupported schema type`)
+    const intersections = flattenIntersections(schema)
+    const unsupportedSchema = intersections.find((intersectionSchema) => !(intersectionSchema instanceof ZodObject))
+    if (unsupportedSchema != null) {
+      throw new Error(
+        `unsupported schema type "${unsupportedSchema.constructor.name}" inside intersection. Only objects allowed.`,
+      )
     }
-    const entries = Object.entries<Schema>(schema._def.left.shape).concat(
-      Object.entries<Schema>(schema._def.right.shape),
+    const entries = intersections.reduce<Array<[string, Schema]>>(
+      (prev, result) => prev.concat(Object.entries(result)),
+      [],
     )
     return buildSchemaInstanceWithElements<T>(
       'object',
@@ -163,7 +168,7 @@ export function buildSchemaInstance<T>(
       },
     })
   }
-  throw new Error(`unsupported schema type`)
+  throw new Error(`unsupported schema type "${schema.constructor.name}"`)
 }
 
 function buildSchemaInstanceWithElements<T>(

@@ -1,5 +1,4 @@
 import { Schema } from 'zod'
-import { buildSchemaDescription, buildSchemaGrammar } from '../schema/index.js'
 import { NonStreamingStepOptions, StreamingStepOptions, stringStep } from '../step.js'
 import { Task } from '../task.js'
 import { isAsyncIterable } from '../utils.js'

@@ -77,5 +77,5 @@ export function createSchemaMock<T>(schema: Schema<T>, seed: string): T {
     }
     return result as T
   }
-  throw new Error(`unsupported schema type`)
+  throw new Error(`unsupported schema type "${schema.constructor.name}"`)
 }
