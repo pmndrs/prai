@@ -1,15 +1,13 @@
 import { ClientOptions } from 'openai'
 import { base } from './base.js'
 import { buildJsonSchema } from '../schema/json.js'
-import { object, ZodObject, ZodUnion } from 'zod'
+import { ZodObject, ZodUnion } from 'zod'
 
 export const openai = base.bind(
   null,
   (schema) => {
     if (!(schema instanceof ZodObject || schema instanceof ZodUnion)) {
-      schema = object({
-        response: schema,
-      })
+      throw new Error(`the root element in the schema must be an object`)
     }
     return {
       response_format: {

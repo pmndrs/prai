@@ -118,10 +118,9 @@ function buildJsonSchemaRec(
   }
   if (schema instanceof ZodIntersection) {
     return {
-      anyOf: [
-        buildJsonSchemaRec(schema._def.left, referenceMap, definitionMap, counter),
-        buildJsonSchemaRec(schema._def.right, referenceMap, definitionMap, counter),
-      ],
+      anyOf: flattenIntersections(schema).map((intersectedSchema) =>
+        buildJsonSchemaRec(intersectedSchema, referenceMap, definitionMap, counter),
+      ),
     }
   }
   if (schema instanceof ZodObject) {
@@ -163,4 +162,11 @@ function buildJsonSchemaRec(
     }
   }
   throw new Error(`Unsupported schema type: ${schema.constructor.name}`)
+}
+
+function flattenIntersections(schema: Schema): Array<Schema> {
+  if (!(schema instanceof ZodIntersection)) {
+    return [schema]
+  }
+  return [...flattenIntersections(schema._def.left), ...flattenIntersections(schema._def.right)]
 }

@@ -67,7 +67,7 @@ const result = await runTask(
       task,
       () => `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
       //7. Enforce a strict schema on the output (a list of strings) - LLM will be forced to comply
-      z.array(z.string()),
+      z.object({ adjectives: z.array(z.string()) }),
     )
 
     // 8. Second step—generate a basic theme

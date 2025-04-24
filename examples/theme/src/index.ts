@@ -23,9 +23,8 @@ const result = await runTask(
     const adjectives = await step(
       task,
       () => `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
-      z.array(z.string()),
+      z.object({ adjectives: z.array(z.string()) }),
     )
-    console.log(adjectives.value)
     const coreTheme = await step(
       task,
       () => `Based on the ${adjectives}, derive a fitting color theme for a modern web design`,
