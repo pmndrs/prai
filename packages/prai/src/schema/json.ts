@@ -2,6 +2,7 @@ import {
   Schema,
   ZodArray,
   ZodBoolean,
+  ZodEnum,
   ZodIntersection,
   ZodLazy,
   ZodLiteral,
@@ -82,6 +83,13 @@ function buildJsonSchemaRec(
     referenceMap.set(schema, reference)
     return {
       $ref: reference,
+    }
+  }
+  if (schema instanceof ZodEnum) {
+    return {
+      type: 'string',
+      description: schema.description,
+      enum: schema.options,
     }
   }
   if (schema instanceof ZodLiteral) {

@@ -71,6 +71,25 @@ describe('schema-json', () => {
     })
   })
 
+  it('should handle enum types correctly', () => {
+    // String enum
+    const stringEnum = z.enum(['red', 'green', 'blue'])
+    expect(buildJsonSchema(stringEnum)).toEqual({
+      type: 'string',
+      enum: ['red', 'green', 'blue'],
+      $defs: {},
+    })
+
+    // String enum with description
+    const stringEnumWithDescription = z.enum(['small', 'medium', 'large']).describe('Size options')
+    expect(buildJsonSchema(stringEnumWithDescription)).toEqual({
+      type: 'string',
+      enum: ['small', 'medium', 'large'],
+      description: 'Size options',
+      $defs: {},
+    })
+  })
+
   it('should handle nullable types correctly', () => {
     const schema = z.string().nullable()
     expect(buildJsonSchema(schema)).toEqual({

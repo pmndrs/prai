@@ -12,6 +12,7 @@ import {
   ZodArray,
   ZodRecord,
   ZodTuple,
+  ZodEnum,
 } from 'zod'
 import { joinStrings } from '../utils.js'
 import { addOptional, addDescription, flattenIntersections } from './utils.js'
@@ -53,6 +54,16 @@ export function buildSchemaDescriptionRec(
       state.reusedSchemaNameMap,
       plural,
     )}${addDescription(schema)} with keys as ${keyDescription} and values as ${valueDescription}`
+  }
+  if (schema instanceof ZodEnum) {
+    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}enum${plural ? 's' : ''}${addTypeName(
+      schema,
+      state.reusedSchemaNameMap,
+      plural,
+    )}${addDescription(schema)} with values ${joinStrings(
+      (schema.options as Array<string>).map((value) => `"${value}"`),
+      'or',
+    )}`
   }
   if (schema instanceof ZodLiteral) {
     return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}literal${plural ? 's' : ''} ${

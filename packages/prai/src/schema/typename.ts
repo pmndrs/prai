@@ -8,6 +8,7 @@ import {
   union,
   ZodArray,
   ZodBoolean,
+  ZodEnum,
   ZodIntersection,
   ZodLazy,
   ZodLiteral,
@@ -28,6 +29,9 @@ export function buildSchemaTypename(schema: Schema): string {
   }
   if (schema instanceof ZodOptional) {
     return `(${buildSchemaTypename(schema.unwrap())} | undefined)`
+  }
+  if (schema instanceof ZodEnum) {
+    return `(${(schema.options as Array<string>).map((value) => `"${value}"`).join(' | ')})`
   }
   if (schema instanceof ZodLiteral) {
     switch (typeof schema.value) {

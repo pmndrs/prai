@@ -2,6 +2,7 @@ import {
   Schema,
   ZodArray,
   ZodBoolean,
+  ZodEnum,
   ZodIntersection,
   ZodLazy,
   ZodLiteral,
@@ -90,7 +91,8 @@ export function buildSchemaInstance<T>(
     schema instanceof ZodString ||
     schema instanceof ZodBoolean ||
     schema instanceof ZodLiteral ||
-    schema instanceof ZodUnion
+    schema instanceof ZodUnion ||
+    schema instanceof ZodEnum
   ) {
     return {
       [Symbol.toPrimitive]:

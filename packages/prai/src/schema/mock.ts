@@ -2,6 +2,7 @@ import {
   Schema,
   ZodArray,
   ZodBoolean,
+  ZodEnum,
   ZodIntersection,
   ZodLazy,
   ZodLiteral,
@@ -53,6 +54,11 @@ export function createSchemaMock<T>(schema: Schema<T>, seed: string): T {
       result[key] = createSchemaMock(itemSchema as ZodTypeAny, seed + key)
     }
     return result as T
+  }
+  if (schema instanceof ZodEnum) {
+    const values = schema.options
+    const index = randomInt(seed, 0, values.length)
+    return values[index] as T
   }
   if (schema instanceof ZodNumber) {
     return randomNumber(seed, -1000, 1000) as T
