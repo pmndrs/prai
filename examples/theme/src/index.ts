@@ -16,14 +16,14 @@ const result = await runTask(
   openai({
     model: 'gpt-4.1',
     systemPrompt: 'you are an expert designer for modern trendy websites',
-    apiKey: 'api key', //TODO
+    apiKey: process.env.OPENAI_API_KEY,
   }),
   () => `Define a shadcn theme for my brand`,
   async (task) => {
     const adjectives = await step(
       task,
       () => `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
-      z.object({ adjectives: z.array(z.string()) }),
+      z.array(z.string()),
     )
     const coreTheme = await step(
       task,

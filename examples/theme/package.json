@@ -1,9 +1,10 @@
 {
     "type": "module",
     "dependencies": {
+        "@dotenvx/dotenvx": "^1.44.1",
         "prai": "workspace:^"
     },
     "scripts": {
-        "dev": "node --loader ts-node/esm ./src/index.ts"
+        "dev": "dotenvx run -f .env -- node --loader ts-node/esm ./src/index.ts"
     }
 }

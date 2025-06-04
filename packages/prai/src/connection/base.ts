@@ -49,7 +49,11 @@ export type Message =
     }
 
 export function base(
-  buildSchemaParams: (schema: Schema) => any,
+  wrapStream: (
+    schema: Schema | undefined,
+    queryStream: (additionalParams?: {}) => AsyncIterable<string>,
+  ) => AsyncIterable<string>,
+  wrap: (schema: Schema | undefined, query: (additionalParams?: {}) => Promise<string>) => Promise<string>,
   clientOptions: ClientOptions | undefined,
   options: ClientOptions & {
     model: string
@@ -65,15 +69,18 @@ export function base(
     systemPrompt: options.systemPrompt,
     query(rootTaskName, taskUuid, queryUuid, messages, stream, _mock, schema, abortSignal) {
       const combinedAbortSignal = AbortSignal.any([abortSignal, options.abortSignal].filter((signal) => signal != null))
-      const additionalParams = schema == null ? undefined : buildSchemaParams(schema)
       return watchQuery(
         rootTaskName,
         taskUuid,
         queryUuid,
         messages,
         stream
-          ? streamingQuery(options.model, client, messages, combinedAbortSignal, additionalParams)
-          : nonStreamingQuery(options.model, client, messages, combinedAbortSignal, additionalParams),
+          ? wrapStream(schema, (additionalParams) =>
+              streamingQuery(options.model, client, messages, combinedAbortSignal, additionalParams),
+            )
+          : wrap(schema, (additionalParams) =>
+              nonStreamingQuery(options.model, client, messages, combinedAbortSignal, additionalParams),
+            ),
         dispatchEvent,
       )
     },
@@ -87,7 +94,6 @@ async function* streamingQuery(
   abortSignal: AbortSignal | undefined,
   additionalParams?: {},
 ): AsyncIterable<string> {
-  let collectedResult = ''
   const result = await client.chat.completions.create(
     {
       messages,
@@ -100,7 +106,6 @@ async function* streamingQuery(
     },
   )
   for await (const chunk of result) {
-    collectedResult += chunk
     yield chunk.choices[0].delta.content ?? ''
   }
 }
