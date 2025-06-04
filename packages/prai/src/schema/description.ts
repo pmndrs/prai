@@ -2,7 +2,6 @@ import {
   Schema,
   ZodLiteral,
   ZodUnion,
-  ZodOptional,
   ZodLazy,
   ZodNumber,
   ZodString,
@@ -13,18 +12,14 @@ import {
   ZodRecord,
   ZodTuple,
   ZodEnum,
+  ZodNullable,
 } from 'zod'
 import { joinStrings } from '../utils.js'
-import { addOptional, addDescription, flattenIntersections } from './utils.js'
+import { addDescription, flattenIntersections } from './utils.js'
 
-export function buildSchemaDescription(
-  schema: Schema,
-  specifc: boolean = false,
-  plural: boolean = false,
-  optional: boolean = false,
-) {
+export function buildSchemaDescription(schema: Schema, specifc: boolean = false, plural: boolean = false) {
   const reusedSchemaNameMap = buildReusedSchemaNameMap(schema)
-  return buildSchemaDescriptionRec(schema, specifc, plural, optional, {
+  return buildSchemaDescriptionRec(schema, specifc, plural, {
     reusedSchemaNameMap,
     seenSchemas: new Set(),
   })
@@ -34,7 +29,6 @@ export function buildSchemaDescriptionRec(
   schema: Schema,
   specifc: boolean,
   plural: boolean,
-  optional: boolean,
   state: {
     seenSchemas: Set<Schema>
     reusedSchemaNameMap: Map<Schema, string>
@@ -47,16 +41,16 @@ export function buildSchemaDescriptionRec(
   }
   state.seenSchemas.add(schema)
   if (schema instanceof ZodRecord) {
-    const keyDescription = buildSchemaDescriptionRec(schema.keySchema, false, true, false, state)
-    const valueDescription = buildSchemaDescriptionRec(schema.valueSchema, false, true, false, state)
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}record${plural ? 's' : ''}${addTypeName(
+    const keyDescription = buildSchemaDescriptionRec(schema.keySchema, false, true, state)
+    const valueDescription = buildSchemaDescriptionRec(schema.valueSchema, false, true, state)
+    return `${specifc ? 'the ' : plural ? '' : 'a '}record${plural ? 's' : ''}${addTypeName(
       schema,
       state.reusedSchemaNameMap,
       plural,
     )}${addDescription(schema)} with keys as ${keyDescription} and values as ${valueDescription}`
   }
   if (schema instanceof ZodEnum) {
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}enum${plural ? 's' : ''}${addTypeName(
+    return `${specifc ? 'the ' : plural ? '' : 'a '}enum${plural ? 's' : ''}${addTypeName(
       schema,
       state.reusedSchemaNameMap,
       plural,
@@ -65,8 +59,11 @@ export function buildSchemaDescriptionRec(
       'or',
     )}`
   }
+  if (schema instanceof ZodNullable) {
+    return `${buildSchemaDescriptionRec(schema.unwrap(), false, false, state)} or null`
+  }
   if (schema instanceof ZodLiteral) {
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}literal${plural ? 's' : ''} ${
+    return `${specifc ? 'the ' : plural ? '' : 'a '}literal${plural ? 's' : ''} ${
       typeof schema.value === 'string' ? `"${schema.value}"` : String(schema.value)
     }${addDescription(schema)}`
   }
@@ -75,7 +72,7 @@ export function buildSchemaDescriptionRec(
       throw new Error(`the options in the union type must be in an array`)
     }
     return joinStrings(
-      schema.options.map((option) => buildSchemaDescriptionRec(option, specifc, plural, optional, state)),
+      schema.options.map((option) => buildSchemaDescriptionRec(option, specifc, plural, state)),
       'or',
     )
   }
@@ -83,35 +80,26 @@ export function buildSchemaDescriptionRec(
     if (!Array.isArray(schema.items)) {
       throw new Error(`the items in the tuple schema must be in an array`)
     }
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}tuple${plural ? 's' : ''}${addTypeName(
+    return `${specifc ? 'the ' : plural ? '' : 'a '}tuple${plural ? 's' : ''}${addTypeName(
       schema,
       state.reusedSchemaNameMap,
       plural,
     )}${addDescription(schema)} containing ${joinStrings(
-      schema.items.map((tupleItem: Schema) => buildSchemaDescriptionRec(tupleItem, false, false, false, state)),
+      schema.items.map((tupleItem: Schema) => buildSchemaDescriptionRec(tupleItem, false, false, state)),
       'and',
     )}`
   }
-  if (schema instanceof ZodOptional) {
-    return buildSchemaDescriptionRec(schema.unwrap(), specifc, plural, true, state)
-  }
   if (schema instanceof ZodLazy) {
-    return buildSchemaDescriptionRec(schema.schema, specifc, plural, optional, state)
+    return buildSchemaDescriptionRec(schema.schema, specifc, plural, state)
   }
   if (schema instanceof ZodNumber) {
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(
-      optional,
-    )}number${plural ? 's' : ''}${addDescription(schema)}`
+    return `${specifc ? 'the ' : plural ? '' : 'a '}number${plural ? 's' : ''}${addDescription(schema)}`
   }
   if (schema instanceof ZodString) {
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(
-      optional,
-    )}string${plural ? 's' : ''}${addDescription(schema)}`
+    return `${specifc ? 'the ' : plural ? '' : 'a '}string${plural ? 's' : ''}${addDescription(schema)}`
   }
   if (schema instanceof ZodBoolean) {
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(
-      optional,
-    )}boolean${plural ? 's' : ''}${addDescription(schema)}`
+    return `${specifc ? 'the ' : plural ? '' : 'a '}boolean${plural ? 's' : ''}${addDescription(schema)}`
   }
   if (schema instanceof ZodIntersection) {
     const intersections = flattenIntersections(schema)
@@ -125,24 +113,17 @@ export function buildSchemaDescriptionRec(
       (prev, intersectionSchema) => prev.concat(Object.entries(intersectionSchema.shape)),
       [],
     )
-    return buildObjectSchemaDescriptionFromShape(schema, entries, specifc, plural, optional, state)
+    return buildObjectSchemaDescriptionFromShape(schema, entries, specifc, plural, state)
   }
   if (schema instanceof ZodObject) {
-    return buildObjectSchemaDescriptionFromShape(
-      schema,
-      Object.entries<Schema>(schema.shape),
-      specifc,
-      plural,
-      optional,
-      state,
-    )
+    return buildObjectSchemaDescriptionFromShape(schema, Object.entries<Schema>(schema.shape), specifc, plural, state)
   }
   if (schema instanceof ZodArray) {
-    return `${specifc ? 'the ' : plural ? '' : 'a '}${addOptional(optional)}list${plural ? 's' : ''}${addTypeName(
+    return `${specifc ? 'the ' : plural ? '' : 'a '}list${plural ? 's' : ''}${addTypeName(
       schema,
       state.reusedSchemaNameMap,
       plural,
-    )}${addDescription(schema)} containing ${buildSchemaDescriptionRec(schema.element, false, true, false, state)}`
+    )}${addDescription(schema)} containing ${buildSchemaDescriptionRec(schema.element, false, true, state)}`
   }
   throw new Error(`unsupported schema type "${schema.constructor.name}"`)
 }
@@ -152,16 +133,15 @@ function buildObjectSchemaDescriptionFromShape(
   shapeEntries: Array<[string, Schema]>,
   specifc: boolean,
   plural: boolean,
-  optional: boolean,
   state: {
     seenSchemas: Set<Schema>
     reusedSchemaNameMap: Map<Schema, string>
   },
 ) {
   const fieldExplanations = shapeEntries.map(
-    ([key, entry]) => `"${key}" which is ${buildSchemaDescriptionRec(entry, false, false, false, state)}`,
+    ([key, entry]) => `"${key}" which is ${buildSchemaDescriptionRec(entry, false, false, state)}`,
   )
-  return `${specifc ? 'the ' : plural ? '' : 'an '}${addOptional(optional)}object${plural ? 's' : ''}${addTypeName(
+  return `${specifc ? 'the ' : plural ? '' : 'an '}object${plural ? 's' : ''}${addTypeName(
     schema,
     state.reusedSchemaNameMap,
     plural,
@@ -236,7 +216,7 @@ function buildReusedSchemaNameMapRec(
     }
     return
   }
-  if (schema instanceof ZodOptional) {
+  if (schema instanceof ZodNullable) {
     buildReusedSchemaNameMapRec(schema.unwrap(), state)
     return
   }

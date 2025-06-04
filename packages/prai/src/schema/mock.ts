@@ -8,7 +8,7 @@ import {
   ZodLiteral,
   ZodNumber,
   ZodObject,
-  ZodOptional,
+  ZodNullable,
   ZodRecord,
   ZodString,
   ZodTuple,
@@ -30,7 +30,7 @@ export function createSchemaMock<T>(schema: Schema<T>, seed: string): T {
   if (schema instanceof ZodLazy) {
     return createSchemaMock(schema.schema, seed)
   }
-  if (schema instanceof ZodOptional) {
+  if (schema instanceof ZodNullable) {
     return random(seed) > 0.5 ? createSchemaMock(schema.unwrap(), seed) : (undefined as T)
   }
   if (schema instanceof ZodLiteral) {

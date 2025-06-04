@@ -8,14 +8,14 @@ import {
   ZodLiteral,
   ZodNumber,
   ZodObject,
-  ZodOptional,
+  ZodNullable,
   ZodRecord,
   ZodString,
   ZodTuple,
   ZodUnion,
 } from 'zod'
 import { buildSchemaDescription } from './description.js'
-import { addOptional, flattenIntersections } from './utils.js'
+import { flattenIntersections } from './utils.js'
 
 export type ToSchemaInstance<T> = T extends object
   ? { [Key in keyof T]: ToSchemaInstance<T[Key]> }
@@ -30,19 +30,13 @@ export function buildSchemaInstance<T>(
   prefix?: () => string,
   suffix?: () => string,
   plural = false,
-  optional = false,
   toStringOverride?: () => string,
 ): ToSchemaInstance<T> {
   if (schema instanceof ZodRecord) {
     const toString =
       toStringOverride ??
       (() =>
-        `${prefix?.() ?? ''}${buildSchemaDescription(
-          schema as unknown as Schema<T>,
-          true,
-          plural,
-          optional,
-        )}${suffix?.() ?? ''}`)
+        `${prefix?.() ?? ''}${buildSchemaDescription(schema as unknown as Schema<T>, true, plural)}${suffix?.() ?? ''}`)
     let cache: ToSchemaInstance<T> | undefined
     return new Proxy({} as ToSchemaInstance<T>, {
       get(_target, p) {
@@ -60,10 +54,9 @@ export function buildSchemaInstance<T>(
         return (cache = buildSchemaInstance(
           schema.valueSchema,
           prefix,
-          () => ` in the ${p} field from the ${addOptional(optional)}record ${suffix?.() ?? ''}`,
+          () => ` in the ${p} field from the record ${suffix?.() ?? ''}`,
           undefined,
-          false,
-          () => `${prefix?.() ?? ''} the ${p} field from the ${addOptional(optional)}record ${suffix?.() ?? ''}`,
+          () => `${prefix?.() ?? ''} the ${p} field from the record ${suffix?.() ?? ''}`,
         ))
       },
     })
@@ -76,15 +69,14 @@ export function buildSchemaInstance<T>(
       prefix,
       suffix,
       plural,
-      optional,
       toStringOverride,
     )
   }
   if (schema instanceof ZodLazy) {
-    buildSchemaInstance(schema.schema, prefix, suffix, plural, optional, toStringOverride)
+    buildSchemaInstance(schema.schema, prefix, suffix, plural, toStringOverride)
   }
-  if (schema instanceof ZodOptional) {
-    return buildSchemaInstance(schema.unwrap(), prefix, suffix, plural, true, toStringOverride)
+  if (schema instanceof ZodNullable) {
+    return buildSchemaInstance(schema.unwrap(), prefix, suffix, plural, toStringOverride)
   }
   if (
     schema instanceof ZodNumber ||
@@ -113,7 +105,6 @@ export function buildSchemaInstance<T>(
       prefix,
       suffix,
       plural,
-      optional,
       toStringOverride,
     )
   }
@@ -136,15 +127,12 @@ export function buildSchemaInstance<T>(
       prefix,
       suffix,
       plural,
-      optional,
       toStringOverride,
     )
   }
   if (schema instanceof ZodArray) {
     let cachedEntry: any
-    const toString =
-      toStringOverride ??
-      (() => `${prefix?.() ?? ''} the ${addOptional(optional)}list${plural ? 's' : ''} ${suffix?.() ?? ''}`)
+    const toString = toStringOverride ?? (() => `${prefix?.() ?? ''} the list${plural ? 's' : ''} ${suffix?.() ?? ''}`)
     return new Proxy([] as unknown as ToSchemaInstance<T>, {
       get(_target, p) {
         if (p === Symbol.toPrimitive) {
@@ -162,10 +150,9 @@ export function buildSchemaInstance<T>(
         return (cachedEntry = buildSchemaInstance(
           schema.element,
           prefix,
-          () => ` in each entry in the ${addOptional(optional)}list ${suffix?.() ?? ''}`,
+          () => ` in each entry in the list ${suffix?.() ?? ''}`,
           true,
-          false,
-          () => `${prefix?.() ?? ''} each entry in the ${addOptional(optional)}list ${suffix?.() ?? ''}`,
+          () => `${prefix?.() ?? ''} each entry in the list ${suffix?.() ?? ''}`,
         ))
       },
     })
@@ -180,13 +167,11 @@ function buildSchemaInstanceWithElements<T>(
   prefix: (() => string) | undefined,
   suffix: (() => string) | undefined,
   plural: boolean,
-  optional: boolean,
   toStringOverride: (() => string) | undefined,
 ) {
   const cache: any = {}
   const toString =
-    toStringOverride ??
-    (() => `${prefix?.() ?? ''} ${`the ${addOptional(optional)}object${plural ? 's' : ''}`} ${suffix?.() ?? ''}`)
+    toStringOverride ?? (() => `${prefix?.() ?? ''} ${`the object${plural ? 's' : ''}`} ${suffix?.() ?? ''}`)
   return new Proxy({} as ToSchemaInstance<T>, {
     get(_target, p) {
       if (p === Symbol.toPrimitive) {
@@ -203,13 +188,9 @@ function buildSchemaInstanceWithElements<T>(
       return (cache[p] = buildSchemaInstance(
         shapeEntry,
         prefix,
-        () => ` in the ${String(p)} ${elementName} from the ${addOptional(optional)}${typeName} ${suffix?.() ?? ''}`,
+        () => ` in the ${String(p)} ${elementName} from the ${typeName} ${suffix?.() ?? ''}`,
         undefined,
-        false,
-        () =>
-          `${prefix?.() ?? ''} the ${String(p)} ${elementName} from the ${addOptional(optional)}${typeName} ${
-            suffix?.() ?? ''
-          }`,
+        () => `${prefix?.() ?? ''} the ${String(p)} ${elementName} from the ${typeName} ${suffix?.() ?? ''}`,
       ))
     },
   })

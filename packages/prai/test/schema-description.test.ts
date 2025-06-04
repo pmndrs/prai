@@ -1,20 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildSchemaDescription } from '../src/index.js'
-import {
-  object,
-  lazy,
-  Schema,
-  string,
-  number,
-  boolean,
-  array,
-  literal,
-  union,
-  optional,
-  record,
-  tuple,
-  intersection,
-} from 'zod'
+import { object, lazy, Schema, string, number, boolean, array, literal, union, record, tuple, intersection } from 'zod'
 
 type X = {
   x?: X
@@ -78,19 +64,19 @@ describe('schema description', () => {
     expect(buildSchemaDescription(schema)).to.equal('an object with the field "name" which is a string')
   })
 
-  // Optional schemas
-  it('should describe optional schema', () => {
-    const schema = optional(string())
-    expect(buildSchemaDescription(schema)).to.equal('a optional string')
+  // Nullable schemas
+  it('should describe a nullable schema', () => {
+    const schema = string().nullable()
+    expect(buildSchemaDescription(schema)).to.equal('a string or null')
   })
 
-  it('should describe object with optional fields', () => {
+  it('should describe object with nullable fields', () => {
     const schema = object({
       name: string(),
-      age: optional(number()),
+      age: number().nullable(),
     })
     expect(buildSchemaDescription(schema)).to.equal(
-      'an object with the fields "name" which is a string, and "age" which is a optional number',
+      'an object with the fields "name" which is a string, and "age" which is a number or null',
     )
   })
 
@@ -153,12 +139,12 @@ describe('schema description', () => {
         name: string(),
         contact: object({
           email: string(),
-          phone: optional(string()),
+          phone: string().nullable(),
         }),
       }),
     })
     expect(buildSchemaDescription(schema)).to.equal(
-      'an object with the field "user" which is an object with the fields "name" which is a string, and "contact" which is an object with the fields "email" which is a string, and "phone" which is a optional string',
+      'an object with the field "user" which is an object with the fields "name" which is a string, and "contact" which is an object with the fields "email" which is a string, and "phone" which is a string or null',
     )
   })
 
@@ -184,7 +170,7 @@ describe('schema description', () => {
     const userSchema = object({
       id: string(),
       name: string(),
-      age: optional(number()),
+      age: number().nullable(),
       addresses: array(addressSchema),
       role: union([literal('admin'), literal('user'), literal('guest')]),
       metadata: record(string(), union([string(), number(), boolean()])),

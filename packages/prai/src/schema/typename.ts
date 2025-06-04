@@ -14,7 +14,7 @@ import {
   ZodLiteral,
   ZodNumber,
   ZodObject,
-  ZodOptional,
+  ZodNullable,
   ZodRecord,
   ZodString,
   ZodTuple,
@@ -27,8 +27,8 @@ export function buildSchemaTypename(schema: Schema): string {
   if (schema instanceof ZodLazy) {
     return buildSchemaTypename(schema.schema)
   }
-  if (schema instanceof ZodOptional) {
-    return `(${buildSchemaTypename(schema.unwrap())} | undefined)`
+  if (schema instanceof ZodNullable) {
+    return `(${buildSchemaTypename(schema.unwrap())} | null)`
   }
   if (schema instanceof ZodEnum) {
     return `(${(schema.options as Array<string>).map((value) => `"${value}"`).join(' | ')})`
