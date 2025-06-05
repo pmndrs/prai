@@ -1,4 +1,4 @@
-import { runTask, step, openai } from 'prai'
+import { runTask, step, openai, groq } from 'prai'
 import { z } from 'zod'
 
 const brandName = `pmndrs`
@@ -13,10 +13,10 @@ const colorScheme = z
   .describe('hsl color')
 
 const result = await runTask(
-  openai({
-    model: 'gpt-4.1',
-    systemPrompt: 'you are an expert designer for modern trendy websites',
-    apiKey: process.env.OPENAI_API_KEY,
+  groq({
+    model: 'meta-llama/llama-4-maverick-17b-128e-instruct', //gpt-4.1-mini
+    //systemPrompt: 'you are an expert designer for modern trendy websites',
+    apiKey: process.env.API_KEY,
   }),
   () => `Define a shadcn theme for my brand`,
   async (task) => {

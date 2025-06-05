@@ -49,11 +49,20 @@ export type Message =
     }
 
 export function base(
-  wrapStream: (
+  streamingQuery: (
+    model: string,
+    client: OpenAI,
+    messages: Array<Message>,
     schema: Schema | undefined,
-    queryStream: (additionalParams?: {}) => AsyncIterable<string>,
+    abortSignal: AbortSignal | undefined,
   ) => AsyncIterable<string>,
-  wrap: (schema: Schema | undefined, query: (additionalParams?: {}) => Promise<string>) => Promise<string>,
+  query: (
+    model: string,
+    client: OpenAI,
+    messages: Array<Message>,
+    schema: Schema | undefined,
+    abortSignal: AbortSignal | undefined,
+  ) => Promise<string>,
   clientOptions: ClientOptions | undefined,
   options: ClientOptions & {
     model: string
@@ -75,57 +84,10 @@ export function base(
         queryUuid,
         messages,
         stream
-          ? wrapStream(schema, (additionalParams) =>
-              streamingQuery(options.model, client, messages, combinedAbortSignal, additionalParams),
-            )
-          : wrap(schema, (additionalParams) =>
-              nonStreamingQuery(options.model, client, messages, combinedAbortSignal, additionalParams),
-            ),
+          ? streamingQuery(options.model, client, messages, schema, combinedAbortSignal)
+          : query(options.model, client, messages, schema, combinedAbortSignal),
         dispatchEvent,
       )
     },
   } as Connection
-}
-
-async function* streamingQuery(
-  model: string,
-  client: OpenAI,
-  messages: Array<Message>,
-  abortSignal: AbortSignal | undefined,
-  additionalParams?: {},
-): AsyncIterable<string> {
-  const result = await client.chat.completions.create(
-    {
-      messages,
-      model,
-      stream: true,
-      ...additionalParams,
-    },
-    {
-      signal: abortSignal,
-    },
-  )
-  for await (const chunk of result) {
-    yield chunk.choices[0].delta.content ?? ''
-  }
-}
-
-async function nonStreamingQuery(
-  model: string,
-  client: OpenAI,
-  messages: Array<Message>,
-  abortSignal: AbortSignal | undefined,
-  options?: {},
-): Promise<string> {
-  const result = await client.chat.completions.create(
-    {
-      messages,
-      model,
-      ...options,
-    },
-    {
-      signal: abortSignal,
-    },
-  )
-  return result.choices[0].message.content ?? ''
 }

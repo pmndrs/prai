@@ -1,5 +1,5 @@
 import { ClientOptions } from 'openai'
-import { base } from './base.js'
+import { base, Message } from './base.js'
 import { buildJsonSchema } from '../schema/json.js'
 import { Schema, ZodObject, ZodUnion } from 'zod'
 import { extractResultProperty, streamingQuery, query } from './utils.js'
@@ -27,10 +27,10 @@ function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
     },
   }
 }
-
-export const openai = base.bind(
+export const groq = base.bind(
   null,
-  (model, client, messages, schema, abortSignal) => {
+  (model, client, providedMessages, schema, abortSignal) => {
+    const messages = transformMessages(providedMessages)
     if (schema == null) {
       return streamingQuery(model, client, messages, abortSignal)
     }
@@ -41,7 +41,8 @@ export const openai = base.bind(
     }
     return streamingQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, false))
   },
-  async (model, client, messages, schema, abortSignal) => {
+  async (model, client, providedMessages, schema, abortSignal) => {
+    const messages = transformMessages(providedMessages)
     if (schema == null) {
       return query(model, client, messages, abortSignal)
     }
@@ -53,5 +54,17 @@ export const openai = base.bind(
     }
     return query(model, client, messages, abortSignal, buildAdditionalParams(schema, false))
   },
-  { baseURL: 'https://api.openai.com/v1' } satisfies ClientOptions,
+  { baseURL: 'https://api.groq.com/openai/v1' } satisfies ClientOptions,
 )
+
+function transformMessages(messages: Array<Message>): Array<Message> {
+  return messages.map((message) => {
+    if (message.role === 'user') {
+      return message
+    }
+    return {
+      role: message.role,
+      content: message.content.map(({ text }) => text).join('\n\n') as any,
+    }
+  })
+}

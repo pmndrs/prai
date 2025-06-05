@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { filterResultObject as extractResultProperty } from '../src/utils.js'
+import { extractResultProperty } from '../src/connection/utils.js'
 
 describe('extractResultProperty', () => {
   // Helper function to create an async iterable from chunks
