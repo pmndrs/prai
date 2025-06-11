@@ -6,3 +6,9 @@ export function isAsyncIterable(obj: unknown): obj is AsyncIterable<unknown, unk
     typeof obj[Symbol.asyncIterator] === 'function'
   )
 }
+
+export const NewLine = `\n`
+
+export function lines(...lines: Array<string>): string {
+  return lines.join(NewLine)
+}
