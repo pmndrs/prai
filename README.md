@@ -99,7 +99,6 @@ console.log(result.value)
 ### TODO for release
 
 - prai-trace?
-- make logging/events work again
 
 ### Roadmap
 
