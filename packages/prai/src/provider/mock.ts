@@ -1,53 +1,37 @@
 import { APIUserAbortError } from 'openai'
 import { randomInt } from '../random.js'
-import { buildEventEmitter, watchQuery } from './event.js'
-import { Connection } from './base.js'
+import { Provider } from '../model.js'
+import { createSchemaMock } from '../schema/mock.js'
 
 const charactersPerToken = 3
 
 export function mock(
   options: {
     seed?: string
-    systemPrompt?: string
     abortSignal?: AbortSignal
     startupDelaySeconds?: number
     tokensPerSecond?: number
-    name?: string
   } = {},
-) {
+): Provider {
   let queryCounter = 0
-  const { dispatchEvent, addEventListener } = buildEventEmitter()
   return {
-    dispatchEvent,
-    addEventListener,
-    systemPrompt: options.systemPrompt,
-    query(
-      rootTaskName,
-      taskName,
-      queryName,
-      messages,
-      stream,
-      mock,
-      _grammar,
-      abortSignal,
-    ): Promise<string> | AsyncIterable<string> {
+    streamingQuery(model, messages, schema, abortSignal) {
       const querySeed = (options.seed ?? '') + queryCounter++
-      const string = mock(querySeed)
+      const string = JSON.stringify(createSchemaMock(schema, querySeed))
       const combinedAbortSignal = AbortSignal.any([abortSignal, options.abortSignal].filter((signal) => signal != null))
       const { startupDelaySeconds = 0.2, tokensPerSecond = 50 } = options
       const secondsPerCharacter = 1 / (tokensPerSecond * charactersPerToken)
-      return watchQuery(
-        rootTaskName,
-        taskName,
-        queryName,
-        messages,
-        stream
-          ? split(startupDelaySeconds, secondsPerCharacter, string, 'split' + querySeed, combinedAbortSignal)
-          : wait(startupDelaySeconds + string.length * secondsPerCharacter, combinedAbortSignal).then(() => string),
-        dispatchEvent,
-      )
+      return split(startupDelaySeconds, secondsPerCharacter, string, querySeed, combinedAbortSignal)
     },
-  } as Connection
+    async query(model, messages, schema, abortSignal) {
+      let result = ''
+      const stream = this.streamingQuery(model, messages, schema, abortSignal)
+      for await (const chunk of stream) {
+        result += chunk
+      }
+      return result
+    },
+  }
 }
 
 async function* split(

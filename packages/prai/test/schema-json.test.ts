@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { union, z } from 'zod'
 import { buildJsonSchema, JsonSchema } from '../src/schema/json.js'
-import * as schemaModule from '../src/schema/json.js'
 
 describe('schema-json', () => {
   it('should convert primitive types correctly', () => {
@@ -347,29 +346,16 @@ describe('schema-json', () => {
         type: 'object',
         additionalProperties: false,
         properties: {
-          name: {
-            type: 'string',
-          },
+          name: { type: 'string' },
           department: {
-            $ref: '#/$defs/definition_1',
-          },
-        },
-        required: ['name', 'department'],
-        $defs: {
-          definition_1: {
             type: 'object',
             additionalProperties: false,
-            properties: {
-              title: {
-                type: 'string',
-              },
-              head: {
-                $ref: '#',
-              },
-            },
+            properties: { title: { type: 'string' }, head: { $ref: '#' } },
             required: ['title', 'head'],
           },
         },
+        required: ['name', 'department'],
+        $defs: {},
       })
     })
   })

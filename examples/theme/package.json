@@ -5,6 +5,6 @@
         "prai": "workspace:^"
     },
     "scripts": {
-        "dev": "dotenvx run -f .env -- node --loader ts-node/esm ./src/index.ts"
+        "dev": "dotenvx run -f .env -- node --loader ts-node/esm --enable-source-maps ./src/index.ts"
     }
 }

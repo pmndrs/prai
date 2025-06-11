@@ -7,10 +7,10 @@
         "declaration": true,
         "esModuleInterop": true,
         "jsx": "react-jsx",
-        "skipLibCheck": true
+        "skipLibCheck": true,
     },
     "ts-node": {
         "transpileOnly": true,
-        "esm": true
+        "esm": true,
     }
 }

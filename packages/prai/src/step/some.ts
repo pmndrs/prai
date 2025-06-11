@@ -1,23 +1,22 @@
 import { ZodArray, ZodType } from 'zod'
-import { Task } from '../task.js'
 import { buildSchemaInstance, ToSchemaInstance } from '../schema/index.js'
 import { isTrueStep } from './true.js'
 import { NonStreamingStepOptions } from '../step.js'
-import { Data, StepData } from '../data.js'
+import { History } from '../history.js'
+import { getSchema } from '../schema/store.js'
 
 export function someStep<T>(
-  task: Task,
-  array: Data<Array<T>>,
+  array: Array<T>,
   fn: (entry: ToSchemaInstance<T>) => string,
-  options?: Omit<NonStreamingStepOptions<Array<T>, boolean>, 'format'>,
-): Promise<StepData<boolean>> {
-  const dataEntryInstance = buildSchemaInstance((array.schema as ZodArray<ZodType<T>>).element)
-  return isTrueStep(task, () => `at least one entry in ${array} is ${fn(dataEntryInstance)}.`, {
-    abortSignal: options?.abortSignal,
-    examples: options?.examples?.map(({ input, output, reason }) => ({
-      input: JSON.stringify(input),
-      output,
-      reason,
-    })),
-  })
+  options?: NonStreamingStepOptions,
+  inSchema?: ZodArray<ZodType<T>>,
+): Promise<boolean> {
+  const resolvedInSchema = inSchema ?? getSchema(array)
+  const dataEntryInstance = buildSchemaInstance((resolvedInSchema as ZodArray<ZodType<T>>).element)
+  let history = options?.history
+  if (history == null) {
+    history = new History()
+    options = { ...options, history }
+  }
+  return isTrueStep(`at least one entry in ${history.reference(array)} is ${fn(dataEntryInstance)}.`, options)
 }

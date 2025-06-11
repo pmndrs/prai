@@ -1,189 +1,117 @@
-import { addStepMessagesToDependencies, getCurrentTaskUuid, startStepContext, StepDependencies } from './context.js'
-import { Task } from './task.js'
-import { createStreamingStepData, Data, StepData, StreamingStepData } from './data.js'
-import { isAsyncIterable } from './utils.js'
-import { Message } from './connection/base.js'
-import { randomString } from './random.js'
 import { Schema } from 'zod'
-import { buildSchemaDescription } from './schema/description.js'
+import { Model, Provider } from './model.js'
+import { buildStepRequestMessage, History } from './history.js'
+import { isAsyncIterable } from './utils.js'
+import { mock } from './provider/mock.js'
 
-export function stepResultToString(
-  task: Task,
-  stepUuid: string,
-  promptFn: () => string,
-  formatDescription: string | undefined,
-  result: unknown,
-): string {
-  const [taskIndex, stepIndex] = addStepMessagesToDependencies(
-    task,
-    stepUuid,
-    promptFn,
-    (prompt, _taskIndex, stepIndex) => [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `## Step ${stepIndex + 1}\n${prompt}.${
-              formatDescription != null ? ` Respond in the format of ${formatDescription}` : ''
-            }. The result of Step ${stepIndex + 1} is:`,
-          },
-        ],
-      },
-      {
-        role: 'assistant',
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result),
-          },
-        ],
-      },
-    ],
-  )
-  return `the Result of Step ${stepIndex + 1}${
-    getCurrentTaskUuid() == task.name ? ' of the current Task' : ` of Task ${taskIndex + 1}`
-  }`
-}
+export type MessageContent = Array<
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } }
+  | {
+      type: 'input_audio'
+      input_audio: { data: string; format: 'wav' | 'mp3' }
+    }
+>
 
-function buildStepMessages(
-  task: Task,
-  stepUuid: string,
-  promptFn: () => string,
-  formatDescription: string | undefined,
-  examples:
-    | Array<{
-        input: any
-        output: any
-        reason?: string
-      }>
-    | undefined,
-  endStepContext: () => StepDependencies,
-  systemPrompt?: string,
-): Array<Message> {
-  addStepMessagesToDependencies(task, stepUuid, promptFn, (prompt, _taskIndex, stepIndex) => [
-    {
-      role: 'user',
-      content: [
-        {
-          type: 'text',
-          text: `## Step ${stepIndex + 1}\nPlease now fulfill the following instructions: ${prompt}.\n${
-            examples
-              ?.map(
-                (example, index) =>
-                  `### Example ${index + 1}\nFor the input ${example.input} the output should be ${example.output} ${
-                    example.reason != null ? `, since ${example.reason}` : ''
-                  }.`,
-              )
-              .join('\n') ?? ''
-          }\nNow respond following the instructions${
-            formatDescription != null ? ` in the format of ${formatDescription}` : ''
-          }.`,
-        },
-      ],
-    },
-  ])
-  const messages: Array<Message> = []
-  systemPrompt ??= task.systemPrompt
-  if (systemPrompt != null) {
-    messages.push({ role: 'system', content: [{ type: 'text', text: systemPrompt }] })
-  }
-  messages.push(
-    ...endStepContext().reduce<Array<Message>>(
-      (prev, current) =>
-        current.messages.reduce((acc, msg) => {
-          const lastMsg = acc[acc.length - 1]
-          if (lastMsg != null && lastMsg.role === msg.role) {
-            lastMsg.content = [...lastMsg.content, { type: 'text', text: '\n\n' }, ...msg.content]
-            return acc
-          }
-          return acc.concat(msg)
-        }, prev),
-      [],
-    ),
-  )
-  return messages
-}
+export type Message =
+  | {
+      role: 'user'
+      content: MessageContent
+    }
+  | {
+      role: 'system' | 'assistant'
+      content: Array<{ type: 'text'; text: string }>
+    }
 
-type StepOptions<ExampleInput = string, ExampleOutput = string> = {
-  schema?: Schema
+type StepOptions = {
+  history?: History
+  model?: Model
   examples?: Array<{
-    input: ExampleInput
-    output: ExampleOutput
+    input: string
+    output: string
     reason?: string
   }>
   abortSignal?: AbortSignal
-  mock?: (seed: string) => string
   systemPrompt?: string
-  /**
-   * a name for the step unique for the whole process (all steps in all tasks and subtasks in the process)
-   * required for caching
-   */
-  name?: string
 }
 
-export type NonStreamingStepOptions<ExampleInput = string, ExampleOutput = string> = { stream?: false } & StepOptions<
-  ExampleInput,
-  ExampleOutput
->
-export type StreamingStepOptions<ExampleInput = string, ExampleOutput = string> = { stream: true } & StepOptions<
-  ExampleInput,
-  ExampleOutput
->
+export type NonStreamingStepOptions = {
+  stream?: false
+} & StepOptions
+export type StreamingStepOptions<S extends StreamTransform> = {
+  stream: S
+} & StepOptions
 
-export function stringStep(
-  task: Task,
-  prompt: () => string,
-  options: StreamingStepOptions,
-): StreamingStepData<string, string>
-export function stringStep(
-  task: Task,
-  prompt: () => string,
-  options?: NonStreamingStepOptions,
-): Promise<StepData<string>>
-export function stringStep(
-  task: Task,
-  prompt: () => string,
-  options?: NonStreamingStepOptions | StreamingStepOptions,
-): Promise<StepData<string>> | StreamingStepData<string, string>
+export type StreamTransform = true | ((input: AsyncIterable<string>) => AsyncIterable<unknown>)
+export type GetStreamOutput<T> = T extends (input: AsyncIterable<string>) => AsyncIterable<infer K> ? K : string
+export type StepResponseStream<T, S> = AsyncIterable<GetStreamOutput<S>> & { getValue(): Promise<T> }
 
-export function stringStep(task: Task, prompt: () => string, options?: NonStreamingStepOptions | StreamingStepOptions) {
-  const stepName = options?.name ?? crypto.randomUUID()
-  const endStepContext = startStepContext(task.name)
-  const schemaDescription = options?.schema == null ? undefined : `a json as ${buildSchemaDescription(options.schema)}`
-  const messages = buildStepMessages(
-    task,
-    stepName,
-    prompt,
-    schemaDescription,
-    options?.examples,
-    endStepContext,
-    options?.systemPrompt,
-  )
-  const result = task.query(
-    task.rootName,
-    task.name,
-    stepName,
-    messages,
-    options?.stream ?? false,
-    options?.mock ?? mockStringStep,
-    options?.schema,
-    options?.abortSignal,
-  )
-  if (isAsyncIterable(result)) {
-    return createStreamingStepData(result, task, stepName, prompt, schemaDescription, collectStreamingString)
+let defaultProvider: Provider
+function getDefaultProvider() {
+  return (defaultProvider ??= mock())
+}
+
+export function step<T, S extends StreamTransform>(
+  prompt: string,
+  schema: Schema<T>,
+  options: StreamingStepOptions<S>,
+): StepResponseStream<T, S>
+export function step<T>(prompt: string, schema: Schema<T>, options?: NonStreamingStepOptions): Promise<T>
+export function step<T, S extends StreamTransform>(
+  prompt: string,
+  schema: Schema<T>,
+  options?: NonStreamingStepOptions | StreamingStepOptions<S>,
+): Promise<T> | StepResponseStream<T, S>
+
+export function step<T, S extends StreamTransform>(
+  prompt: string,
+  schema: Schema<T>,
+  {
+    model = new Model({ name: 'mock', provider: getDefaultProvider() }),
+    abortSignal,
+    examples,
+    history,
+    stream: streamOption = false,
+    systemPrompt,
+  }: NonStreamingStepOptions | StreamingStepOptions<S> = {},
+) {
+  const stepId = history?.addStepRequest(prompt, schema, examples)
+  let messages = history?.['messages'] ?? [buildStepRequestMessage(0, prompt, schema, new Map(), new Set(), examples)]
+  if (systemPrompt != null) {
+    messages = [{ role: 'system', content: [{ type: 'text', text: systemPrompt }] }, ...messages]
   }
-  return result.then((value) => new StepData(value, task, stepName, prompt, schemaDescription))
-}
-
-function mockStringStep(seed: string): string {
-  return randomString(seed, 5, 50)
-}
-
-export async function collectStreamingString(stream: AsyncIterable<string>) {
-  let string = ''
-  for await (const chunk of stream) {
-    string += chunk
+  let { value, stream } = model.query(messages, schema, streamOption != false, abortSignal)
+  let result: Promise<T> | StepResponseStream<T, S> = value as Promise<T>
+  if (stream != null) {
+    result = Object.assign(stream as AsyncIterable<GetStreamOutput<S>>, {
+      getValue() {
+        return value as Promise<T>
+      },
+    })
   }
-  return string
+  if (stepId != null && history != null) {
+    result = wrapStepResponse(result, (value) => history.addStepResponse(stepId, value, schema))
+  }
+  return result
+}
+
+export function isStepResponse(val: unknown): val is Promise<any> | StepResponseStream<any, any> {
+  if (val instanceof Promise) {
+    return true
+  }
+  if (!isAsyncIterable(val)) {
+    return false
+  }
+  return 'getValue' in val
+}
+
+export function wrapStepResponse<T, S extends StreamTransform>(
+  input: Promise<T> | StepResponseStream<T, S>,
+  wrap: <T>(value: Promise<T>) => Promise<T>,
+): Promise<T> | StepResponseStream<T, S> {
+  if (!isAsyncIterable(input)) {
+    return wrap(input)
+  }
+  input.getValue = () => wrap(input.getValue())
+  return input
 }

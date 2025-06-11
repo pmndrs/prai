@@ -34,6 +34,7 @@
     "url": "git@github.com:pmndrs/prai.git"
   },
   "dependencies": {
+    "@biomejs/js-api": "^0.7.1",
     "chalk": "^5.4.1",
     "imurmurhash": "^0.1.4",
     "openai": "^4.85.1"

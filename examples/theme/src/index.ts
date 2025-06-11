@@ -1,9 +1,11 @@
-import { runTask, step, openai, groq } from 'prai'
+import { consoleLogger, groq, History, Model, step } from 'prai'
 import { z } from 'zod'
 
+// 1. Inputs for our theme generation process
 const brandName = `pmndrs`
-const brandDescription = `Open Source Developer Collective`
+const brandDescription = `Open source developer collective`
 
+// 2. Zod schema for a color in hsl - will be given to the LLM as the expected output format
 const colorScheme = z
   .object({
     hue: z.number().describe('in degree (0-360)'),
@@ -12,60 +14,66 @@ const colorScheme = z
   })
   .describe('hsl color')
 
-const result = await runTask(
-  groq({
-    model: 'meta-llama/llama-4-maverick-17b-128e-instruct', //gpt-4.1-mini
-    //systemPrompt: 'you are an expert designer for modern trendy websites',
-    apiKey: process.env.API_KEY,
-  }),
-  () => `Define a shadcn theme for my brand`,
-  async (task) => {
-    const adjectives = await step(
-      task,
-      () => `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
-      z.array(z.string()),
-    )
-    const coreTheme = await step(
-      task,
-      () => `Based on the ${adjectives}, derive a fitting color theme for a modern web design`,
-      z.object({
-        background: colorScheme,
-        foreground: colorScheme,
-        primary: colorScheme,
-        secondary: colorScheme,
-        accent: colorScheme,
-        border: colorScheme,
-        radius: z.number().describe('border radius in rem: 0 means sharp corners, 1 means very rounded corners'),
-      }),
-    )
+// 3. Create a model based on an AI provider (openai, groq, more support comming soon)
+const model = new Model({
+  name: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+  provider: groq({ apiKey: process.env.API_KEY }),
+})
 
-    return step(
-      task,
-      () => `Expand the ${coreTheme} to a full shadcn theme for a modern web design with well designed contrasts`,
-      z.object({
-        background: colorScheme,
-        foreground: colorScheme,
-        card: colorScheme,
-        cardForeground: colorScheme,
-        popover: colorScheme,
-        popoverForeground: colorScheme,
-        primary: colorScheme,
-        primaryForeground: colorScheme,
-        secondary: colorScheme,
-        secondaryForeground: colorScheme,
-        muted: colorScheme,
-        mutedForeground: colorScheme,
-        accent: colorScheme,
-        accentForeground: colorScheme,
-        destructive: colorScheme,
-        destructiveForeground: colorScheme,
-        border: colorScheme,
-        input: colorScheme,
-        ring: colorScheme,
-        radius: z.number().describe('radius in rem'),
-      }),
-    )
-  },
+// 4. create a chat history
+const history = new History()
+consoleLogger(history)
+
+// 5. First step
+const adjectives = await step(
+  //6. Enforce a strict schema on the output (a list of strings) - LLM will be forced to comply
+  `list some adjectives fitting the design of the ${brandName} brand which is a ${brandDescription}`,
+  z.array(z.string()),
+  { model, history },
+)
+
+// 7. Second step—generate a basic theme
+const coreTheme = await step(
+  // 9. We can reference results from history using history.reference
+  `Based on the ${history.reference(adjectives)}, derive fitting color theme`,
+  z.object({
+    background: colorScheme,
+    foreground: colorScheme,
+    primary: colorScheme,
+    secondary: colorScheme,
+    accent: colorScheme,
+    border: colorScheme,
+    radius: z.number().describe('border radius in rem: 0 means sharp corners, 1 means very rounded corners'),
+  }),
+  { model, history },
+)
+
+// 10. Final step—expand into a full shadcn theme
+const result = await step(
+  `Expand the ${history.reference(coreTheme)} to a full shadcn theme`,
+  z.object({
+    background: colorScheme,
+    foreground: colorScheme,
+    card: colorScheme,
+    cardForeground: colorScheme,
+    popover: colorScheme,
+    popoverForeground: colorScheme,
+    primary: colorScheme,
+    primaryForeground: colorScheme,
+    secondary: colorScheme,
+    secondaryForeground: colorScheme,
+    muted: colorScheme,
+    mutedForeground: colorScheme,
+    accent: colorScheme,
+    accentForeground: colorScheme,
+    destructive: colorScheme,
+    destructiveForeground: colorScheme,
+    border: colorScheme,
+    input: colorScheme,
+    ring: colorScheme,
+    radius: z.number().describe('radius in rem'),
+  }),
+  { model, history },
 )
 
 // Convert HSL color to OKLCH string
@@ -74,7 +82,7 @@ function hsl(color: { hue: number; saturation: number; lightness: number }): str
 }
 
 // Format the theme as CSS variables
-function formatThemeAsCss(theme: any): string {
+function formatThemeAsCss(theme: typeof result): string {
   let css = `:root {\n`
   css += `  --radius: ${theme.radius}rem;\n`
   css += `  --background: ${hsl(theme.background)};\n`
@@ -125,6 +133,6 @@ function formatThemeAsCss(theme: any): string {
 }
 
 // Log the theme in CSS format
-console.log(formatThemeAsCss(result.value))
+console.log(formatThemeAsCss(result))
 
 //import into https://tweakcn.com/editor/theme to visualize

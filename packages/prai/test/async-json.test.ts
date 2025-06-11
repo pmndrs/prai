@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { encodeAsyncJson, decodeAsyncJson, createAsyncState } from '../src/async-json.js'
-import { StreamingStepData } from '../src/data.js'
 
 describe('async-json', () => {
   describe('encodeAsyncJson and decodeAsyncJson', () => {
@@ -33,9 +32,9 @@ describe('async-json', () => {
 
       const encoded = encodeAsyncJson(data)
       const decoded = await decodeAsyncJson<{
-        field1: StreamingStepData<string, string>
+        field1: AsyncIterable<string>
         nested: {
-          field2: StreamingStepData<number, number>
+          field2: AsyncIterable<number>
         }
       }>(encoded, new AbortController().signal)
 
@@ -58,7 +57,7 @@ describe('async-json', () => {
       const encoded = encodeAsyncJson(data)
       const abortController = new AbortController()
       const decoded = await decodeAsyncJson<{
-        counter: StreamingStepData<number, number>
+        counter: AsyncIterable<number>
       }>(encoded, abortController.signal)
 
       const values: number[] = []
@@ -86,7 +85,7 @@ describe('async-json', () => {
       const encoded = encodeAsyncJson(data)
       const abortController = new AbortController()
       const decoded = await decodeAsyncJson<{
-        value: StreamingStepData<string, string>
+        value: AsyncIterable<string>
       }>(encoded, abortController.signal)
 
       const iterationPromise = (async () => {
@@ -117,8 +116,8 @@ describe('async-json', () => {
 
       const encoded = encodeAsyncJson(data)
       const decoded = await decodeAsyncJson<{
-        num: StreamingStepData<number, number>
-        str: StreamingStepData<string, string>
+        num: AsyncIterable<number>
+        str: AsyncIterable<string>
       }>(encoded, new AbortController().signal)
 
       const values1: number[] = []
@@ -156,7 +155,7 @@ describe('async-json', () => {
 
       const encoded = encodeAsyncJson(data)
       const decoded = await decodeAsyncJson<{
-        array: [StreamingStepData<number, number>, StreamingStepData<number, number>]
+        array: [AsyncIterable<number>, AsyncIterable<number>]
       }>(encoded, new AbortController().signal)
 
       const values1: number[] = []
@@ -183,7 +182,7 @@ describe('async-json', () => {
       const encoded = encodeAsyncJson(data)
       const abortController = new AbortController()
       const decoded = await decodeAsyncJson<{
-        value: StreamingStepData<number, number>
+        value: AsyncIterable<number>
       }>(encoded, abortController.signal)
 
       const values: number[] = []

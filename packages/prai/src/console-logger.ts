@@ -1,7 +1,7 @@
-import { Connection } from '../connection/index.js'
 import chalk from 'chalk'
+import { History } from './history.js'
 
-export function consoleLogger(connection: Connection, options?: { abort?: AbortSignal }): void {
+export function consoleLogger(history: History, options?: { abort?: AbortSignal }): void {
   const abortSignal = options?.abort
   const initialTime = Date.now()
 
@@ -112,20 +112,12 @@ export function consoleLogger(connection: Connection, options?: { abort?: AbortS
   }
 
   // Log header with timestamp and event type
-  const logHeader = (
-    rootTaskName: string,
-    type: string,
-    id: string,
-    time: number,
-    color: typeof chalk.blue,
-    taskName?: string,
-  ) => {
+  const logHeader = (historyId: string, type: string, time: number, color: typeof chalk.blue) => {
     const timestamp = colors.timestamp(`[${formatTime(time)}]`)
     const header = color(`${type}`)
-    const idFormatted = `: ${formatId(id)}`
-    const taskNameStr = taskName ? ` (Task: ${formatId(taskName)})` : ''
+    const idFormatted = `: ${formatId(historyId)}`
 
-    console.log(`${colors.key(`[${rootTaskName}]`)} ${timestamp} ${header}${idFormatted}${taskNameStr}`)
+    console.log(`${colors.key(`[History]`)} ${timestamp} ${header}${idFormatted}`)
   }
 
   // Log with decorative separator
@@ -136,117 +128,78 @@ export function consoleLogger(connection: Connection, options?: { abort?: AbortS
   // Always start with a separator for the first event
   logSeparator()
 
-  connection.addEventListener(
-    'data-import',
+  history.addEventListener(
+    'step-request',
     (event) => {
-      logHeader(event.rootTaskName, 'Import data', event.dataName, event.time, colors.info, event.taskName)
-      console.log('  Data:')
-      console.log(
-        '  ' +
-          formatJson(typeof event.value === 'string' ? event.value : JSON.stringify(event.value)).replace(
-            /\n/g,
-            '\n  ',
-          ),
-      )
+      logHeader(event.historyId, 'Step Request', Date.now(), colors.info)
+      console.log('  Message:')
+      console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
       logSeparator()
     },
     { signal: abortSignal },
   )
 
-  connection.addEventListener(
-    'task-start',
+  history.addEventListener(
+    'step-response',
     (event) => {
-      logHeader(event.rootTaskName, 'Task started', event.taskName, event.time, colors.info)
-      console.log('  Goal:')
-      console.log('  ' + colors.highlight(event.goal))
+      logHeader(event.historyId, 'Step Response', Date.now(), colors.success)
+      console.log('  Message:')
+      console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
       logSeparator()
     },
     { signal: abortSignal },
   )
 
-  connection.addEventListener(
-    'task-finish',
+  history.addEventListener(
+    'step-error',
     (event) => {
-      logHeader(event.rootTaskName, 'Task finished', event.taskName, event.time, colors.success)
-      console.log('  Result:')
-      try {
-        const valueStr = typeof event.value === 'string' ? event.value : JSON.stringify(event.value)
-        console.log('  ' + formatJson(JSON.parse(valueStr)).replace(/\n/g, '\n  '))
-      } catch {
-        console.log('  ' + colors.success(typeof event.value === 'string' ? event.value : JSON.stringify(event.value)))
-      }
+      logHeader(event.historyId, 'Step Error', Date.now(), colors.error)
+      console.error('  Error:')
+      console.log('  ' + colors.error(event.error))
       logSeparator()
     },
     { signal: abortSignal },
   )
 
-  connection.addEventListener(
-    'task-cancel',
+  history.addEventListener(
+    'subtask-start',
     (event) => {
-      logHeader(event.rootTaskName, 'Task cancelled', event.taskName, event.time, colors.warning)
+      logHeader(event.historyId, 'Subtask Started', Date.now(), colors.info)
+      console.log('  Subtask History ID:')
+      console.log('  ' + formatId(event.subtaskHistoryId))
       logSeparator()
     },
     { signal: abortSignal },
   )
 
-  connection.addEventListener(
-    'task-error',
+  history.addEventListener(
+    'data-reference-added',
     (event) => {
-      logHeader(event.rootTaskName, 'Task error', event.taskName, event.time, colors.error)
-      console.error('  Error details:')
-      const errorStr = typeof event.error === 'object' ? JSON.stringify(event.error) : String(event.error)
-      console.log('  ' + formatJson(errorStr).replace(/\n/g, '\n  '))
+      logHeader(event.historyId, 'Data Added', Date.now(), colors.info)
+      console.log('  Message:')
+      console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
       logSeparator()
     },
     { signal: abortSignal },
   )
 
-  connection.addEventListener(
-    'query-start',
+  history.addEventListener(
+    'subtask-response-referenced',
     (event) => {
-      logHeader(event.rootTaskName, 'Query started', event.queryName, event.time, colors.info, event.taskName)
-      console.log('  Messages:')
-      console.log('  ' + formatMessages(event.messages).replace(/\n/g, '\n  '))
+      logHeader(event.historyId, 'Subtask Response Referenced', Date.now(), colors.success)
+      console.log('  Request Message:')
+      console.log('  ' + formatMessages([event.requestMessage]).replace(/\n/g, '\n  '))
+      console.log('  Response Message:')
+      console.log('  ' + formatMessages([event.responseMessage]).replace(/\n/g, '\n  '))
       logSeparator()
     },
     { signal: abortSignal },
   )
 
-  connection.addEventListener(
-    'query-finish',
+  history.addEventListener(
+    'history-forgot',
     (event) => {
-      logHeader(event.rootTaskName, 'Query finished', event.queryName, event.time, colors.success)
-      console.log('  Result:')
-      try {
-        // Try to parse the result as JSON for better formatting
-        const valueStr = typeof event.value === 'string' ? event.value : JSON.stringify(event.value)
-        const parsedResult = JSON.parse(valueStr)
-        console.log('  ' + formatJson(parsedResult).replace(/\n/g, '\n  '))
-      } catch {
-        // If it's not valid JSON, display as is
-        console.log('  ' + colors.success(typeof event.value === 'string' ? event.value : JSON.stringify(event.value)))
-      }
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
-
-  connection.addEventListener(
-    'query-cancel',
-    (event) => {
-      logHeader(event.rootTaskName, 'Query cancelled', event.queryName, event.time, colors.warning)
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
-
-  connection.addEventListener(
-    'query-error',
-    (event) => {
-      logHeader(event.rootTaskName, 'Query error', event.queryName, event.time, colors.error)
-      console.error('  Error details:')
-      const errorStr = typeof event.error === 'object' ? JSON.stringify(event.error) : String(event.error)
-      console.log('  ' + formatJson(errorStr).replace(/\n/g, '\n  '))
+      logHeader(event.historyId, 'History Cleared', Date.now(), colors.warning)
       logSeparator()
     },
     { signal: abortSignal },

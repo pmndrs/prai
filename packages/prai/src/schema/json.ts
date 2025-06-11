@@ -13,6 +13,8 @@ import {
   ZodUnion,
 } from 'zod'
 import { flattenIntersections } from './utils.js'
+import { SchemaVisitor } from './visitor.js'
+import { ReusedSchemaVisitor } from './reused.js'
 
 export type JsonSchema =
   | {
@@ -50,61 +52,66 @@ export type JsonSchema =
     }
 
 export function buildJsonSchema(schema: Schema) {
-  const referenceMap = new Map<Schema, string>()
-  const definitionMap = new Map<Schema, string>()
-  const counter = { current: 1 }
-  const result = buildJsonSchemaRec(schema, referenceMap, definitionMap, counter, true)
-  result.$defs = {}
-  for (const [reusedSchema, name] of definitionMap.entries()) {
-    result.$defs[name] = buildJsonSchemaRec(reusedSchema, referenceMap, definitionMap, counter)
-  }
+  const reusedSchemaVisitor = new ReusedSchemaVisitor()
+  reusedSchemaVisitor.visit(schema)
+  const jsonSchemaVisitor = new JsonSchemaVisitor(reusedSchemaVisitor.reusedSchemas)
+  const result = jsonSchemaVisitor.visit(schema, true)
+  result.$defs = jsonSchemaVisitor.$defs
   return result
 }
 
-function buildJsonSchemaRec(
-  schema: Schema,
-  referenceMap: Map<Schema, string>,
-  definitionMap: Map<Schema, string>,
-  counter: { current: number },
-  isRoot = false,
-): JsonSchema {
-  const reference = referenceMap.get(schema)
-  if (reference != null) {
-    return { $ref: reference }
+class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
+  private referenceMap = new Map<Schema, string>()
+  private definitionCounter: number = 0
+  public $defs: Record<string, JsonSchema> = {}
+
+  constructor(private readonly reusedSchemas: Set<Schema>) {
+    super()
   }
-  if (schema instanceof ZodLazy) {
-    if (isRoot) {
-      referenceMap.set(schema, '#')
-      return buildJsonSchemaRec(schema.schema, referenceMap, definitionMap, counter)
+
+  visit(schema: Schema, isRoot: boolean = false): JsonSchema {
+    if (!this.reusedSchemas.has(schema)) {
+      return super.visit(schema)
     }
-    const name = `definition_${counter.current++}`
-    definitionMap.set(schema.schema, name)
-    const reference = `#/$defs/${name}`
-    referenceMap.set(schema, reference)
+    let reference = this.referenceMap.get(schema)
+    if (isRoot && reference == null) {
+      this.referenceMap.set(schema, '#')
+      return super.visit(schema)
+    }
+    if (reference == null) {
+      const name = `definition_${1 + this.definitionCounter++}`
+      this.referenceMap.set(schema, (reference = `#/$defs/${name}`))
+      this.$defs[name] = super.visit(schema)
+    }
     return {
       $ref: reference,
     }
   }
-  if (schema instanceof ZodEnum) {
+
+  visitArray(schema: ZodArray<any>): JsonSchema {
+    return {
+      type: 'array',
+      description: schema.description,
+      items: this.visit(schema.element),
+    }
+  }
+
+  visitBoolean(schema: ZodBoolean): JsonSchema {
+    return {
+      type: 'boolean',
+      description: schema.description,
+    }
+  }
+
+  visitEnum(schema: ZodEnum<any>): JsonSchema {
     return {
       type: 'string',
       description: schema.description,
       enum: schema.options,
     }
   }
-  if (schema instanceof ZodLiteral) {
-    return {
-      type: 'string',
-      description: schema.description,
-      enum: [schema.value],
-    }
-  }
-  if (schema instanceof ZodNullable) {
-    return {
-      anyOf: [buildJsonSchemaRec(schema.unwrap(), referenceMap, definitionMap, counter), { type: 'null' }],
-    }
-  }
-  if (schema instanceof ZodIntersection) {
+
+  visitIntersection(schema: ZodIntersection<any, any>): JsonSchema {
     const properties: any = {}
     const intersections = flattenIntersections(schema)
     for (const intersection of intersections) {
@@ -112,7 +119,7 @@ function buildJsonSchemaRec(
         throw new Error(`Union options must be objects`)
       }
       for (const key in intersection.shape) {
-        properties[key] = buildJsonSchemaRec(intersection.shape[key], referenceMap, definitionMap, counter)
+        properties[key] = this.visit(intersection.shape[key])
       }
     }
     return {
@@ -123,20 +130,30 @@ function buildJsonSchemaRec(
       description: schema.description,
     }
   }
-  if (schema instanceof ZodUnion) {
-    if (!Array.isArray(schema.options)) {
-      throw new Error(`the options in the union schema must be in an array`)
-    }
+
+  visitLazy(schema: ZodLazy<any>): JsonSchema {
+    return this.visit(schema.schema)
+  }
+
+  visitLiteral(schema: ZodLiteral<any>): JsonSchema {
     return {
-      anyOf: schema.options.map((intersectedSchema) =>
-        buildJsonSchemaRec(intersectedSchema, referenceMap, definitionMap, counter),
-      ),
+      type: 'string',
+      description: schema.description,
+      enum: [schema.value],
     }
   }
-  if (schema instanceof ZodObject) {
+
+  visitNumber(schema: ZodNumber): JsonSchema {
+    return {
+      type: 'number',
+      description: schema.description,
+    }
+  }
+
+  visitObject(schema: ZodObject<any>): JsonSchema {
     const properties: any = {}
     for (const key in schema.shape) {
-      properties[key] = buildJsonSchemaRec(schema.shape[key], referenceMap, definitionMap, counter)
+      properties[key] = this.visit(schema.shape[key])
     }
     return {
       type: 'object',
@@ -146,30 +163,26 @@ function buildJsonSchemaRec(
       description: schema.description,
     }
   }
-  if (schema instanceof ZodNumber) {
+
+  visitNullable(schema: ZodNullable<any>): JsonSchema {
     return {
-      type: 'number',
-      description: schema.description,
+      anyOf: [this.visit(schema.unwrap()), { type: 'null' }],
     }
   }
-  if (schema instanceof ZodString) {
+
+  visitString(schema: ZodString): JsonSchema {
     return {
       type: 'string',
       description: schema.description,
     }
   }
-  if (schema instanceof ZodBoolean) {
+
+  visitUnion(schema: ZodUnion<any>): JsonSchema {
+    if (!Array.isArray(schema.options)) {
+      throw new Error(`the options in the union schema must be in an array`)
+    }
     return {
-      type: 'boolean',
-      description: schema.description,
+      anyOf: schema.options.map((intersectedSchema) => this.visit(intersectedSchema)),
     }
   }
-  if (schema instanceof ZodArray) {
-    return {
-      type: 'array',
-      description: schema.description,
-      items: buildJsonSchemaRec(schema.element, referenceMap, definitionMap, counter),
-    }
-  }
-  throw new Error(`Unsupported schema type: ${schema.constructor.name}`)
 }

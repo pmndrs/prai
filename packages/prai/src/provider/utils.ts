@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import type { Message } from './base.js'
+import { Message } from '../step.js'
 
 export async function* streamingQuery(
   model: string,

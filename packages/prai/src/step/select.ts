@@ -1,33 +1,28 @@
 import { Schema, ZodArray } from 'zod'
-import { Data, StepData } from '../data.js'
 import { buildSchemaInstance, ToSchemaInstance } from '../schema/index.js'
-import { NonStreamingStepOptions } from '../step.js'
-import { Task } from '../task.js'
-import { jsonStep } from './json.js'
+import { NonStreamingStepOptions, step } from '../step.js'
+import { History } from '../history.js'
+import { getSchema } from '../schema/store.js'
 
 export function selectStep<T>(
-  task: Task,
-  data: Data<Array<T>>,
+  data: Array<T>,
   queryPrompt: (entry: ToSchemaInstance<T>) => string,
-  options?: Omit<NonStreamingStepOptions<Array<T>, T>, 'format'>,
-): Promise<StepData<T>> {
-  const elementSchema = (data.schema as ZodArray<Schema<T>>).element
+  options?: NonStreamingStepOptions,
+  inSchema?: ZodArray<Schema<T>>,
+): Promise<T> {
+  const resolvedInSchema = inSchema ?? getSchema(data)
+  const elementSchema = (resolvedInSchema as ZodArray<Schema<T>>).element
   const dataEntryInstance = buildSchemaInstance<T>(elementSchema, undefined, () => ' of each entry')
-  return jsonStep(
-    task,
-    () =>
-      `Out of each entry in ${data} select ${queryPrompt(
-        dataEntryInstance,
-      )}. Return all the exact data of the selected entry.`,
+  let history = options?.history
+  if (history == null) {
+    history = new History()
+    options = { ...options, history }
+  }
+  return step(
+    `Out of each entry in ${history.reference(data)} select ${queryPrompt(
+      dataEntryInstance,
+    )}. Return all the exact data of the selected entry.`,
     elementSchema,
-    {
-      abortSignal: options?.abortSignal,
-      examples: options?.examples?.map(({ input, output, reason }) => ({
-        input: JSON.stringify(input),
-        output,
-        reason,
-      })),
-      stream: false,
-    },
+    options,
   )
 }

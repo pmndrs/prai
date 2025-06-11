@@ -1,51 +1,47 @@
 import { array, Schema, ZodArray } from 'zod'
 import { buildSchemaInstance, ToSchemaInstance } from '../schema/index.js'
-import { Task } from '../task.js'
-import { jsonArrayStep } from './json.js'
-import { NonStreamingStepOptions, StreamingStepOptions } from '../step.js'
-import { Data, StepData, StreamingStepData } from '../data.js'
+import { NonStreamingStepOptions, step, StepResponseStream, StreamingStepOptions, StreamTransform } from '../step.js'
+import { History } from '../history.js'
+import { getSchema } from '../schema/store.js'
+
+export function filterStep<T, S extends StreamTransform>(
+  data: Array<T>,
+  fn: (entry: ToSchemaInstance<T>) => string,
+  options: StreamingStepOptions<S>,
+  inSchema?: ZodArray<Schema<T>>,
+): StepResponseStream<Array<T>, S>
 
 export function filterStep<T>(
-  task: Task,
-  data: Data<Array<T>>,
+  data: Array<T>,
   fn: (entry: ToSchemaInstance<T>) => string,
-  options: Omit<StreamingStepOptions<Array<T>, Array<T>>, 'format'>,
-): StreamingStepData<T, Array<T>>
+  options?: NonStreamingStepOptions,
+  inSchema?: ZodArray<Schema<T>>,
+): Promise<Array<T>>
 
-export function filterStep<T>(
-  task: Task,
-  data: Data<Array<T>>,
+export function filterStep<T, S extends StreamTransform>(
+  data: Array<T>,
   fn: (entry: ToSchemaInstance<T>) => string,
-  options?: Omit<NonStreamingStepOptions<Array<T>, Array<T>>, 'format'>,
-): Promise<StepData<Array<T>>>
+  options?: StreamingStepOptions<S> | NonStreamingStepOptions,
+  inSchema?: ZodArray<Schema<T>>,
+): Promise<Array<T>> | StepResponseStream<Array<T>, S>
 
-export function filterStep<T>(
-  task: Task,
-  data: Data<Array<T>>,
+export function filterStep<T, S extends StreamTransform>(
+  data: Array<T>,
   fn: (entry: ToSchemaInstance<T>) => string,
-  options?: Omit<StreamingStepOptions<Array<T>, Array<T>> | NonStreamingStepOptions<Array<T>, Array<T>>, 'format'>,
-): Promise<StepData<Array<T>>> | StreamingStepData<T, Array<T>>
-
-export function filterStep<T>(
-  task: Task,
-  data: Data<Array<T>>,
-  fn: (entry: ToSchemaInstance<T>) => string,
-  options?: Omit<StreamingStepOptions<Array<T>, Array<T>> | NonStreamingStepOptions<Array<T>, Array<T>>, 'format'>,
-): Promise<StepData<Array<T>>> | StreamingStepData<T, Array<T>> {
-  const schemaElement = (data.schema as ZodArray<Schema<T>>).element
+  options?: StreamingStepOptions<S> | NonStreamingStepOptions,
+  inSchema?: ZodArray<Schema<T>>,
+): Promise<Array<T>> | StepResponseStream<Array<T>, S> {
+  const resolvedInSchema = inSchema ?? getSchema(data)
+  const schemaElement = (resolvedInSchema as ZodArray<Schema<T>>).element
   const dataEntryInstance = buildSchemaInstance<T>(schemaElement)
-  return jsonArrayStep(
-    task,
-    () => `Filter ${data} by only keeping the entries where ${fn(dataEntryInstance)}.`,
-    array(schemaElement).max(data.value.length),
-    {
-      abortSignal: options?.abortSignal,
-      examples: options?.examples?.map(({ input, output, reason }) => ({
-        input: JSON.stringify(input),
-        output,
-        reason,
-      })),
-      stream: options?.stream,
-    },
+  let history = options?.history
+  if (history == null) {
+    history = new History()
+    options = { ...options, history }
+  }
+  return step(
+    `Filter ${history.reference(data)} by only keeping the entries where ${fn(dataEntryInstance)}.`,
+    array(schemaElement).max(data.length),
+    options,
   )
 }

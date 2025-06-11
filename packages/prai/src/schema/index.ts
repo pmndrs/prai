@@ -1,3 +1,4 @@
-export * from './description.js'
 export * from './instance.js'
-export * from './typename.js'
+export * from './type.js'
+export * from './json.js'
+export * from './mock.js'

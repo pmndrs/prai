@@ -1,96 +1,82 @@
 import { array, intersection, ZodArray, ZodType } from 'zod'
-import {
-  buildSchemaInstance,
-  Data,
-  NonStreamingStepOptions,
-  StepData,
-  StreamingStepData,
-  StreamingStepOptions,
-  Task,
-  ToSchemaInstance,
-} from '../index.js'
-import { jsonArrayStep } from './json.js'
+import { buildSchemaInstance, ToSchemaInstance } from '../schema/index.js'
+import { NonStreamingStepOptions, step, StepResponseStream, StreamingStepOptions, StreamTransform } from '../step.js'
+import { History } from '../history.js'
+import { getSchema } from '../schema/store.js'
 
-export function leftInnerJoinStep<T extends object, K extends object>(
-  task: Task,
-  leftData: Data<Array<T>>,
-  rightData: Data<Array<K>>,
+export function leftInnerJoinStep<T extends object, K extends object, S extends StreamTransform>(
+  leftData: Array<T>,
+  rightData: Array<K>,
   where: Array<
     [left: (left: ToSchemaInstance<T>) => string, () => string, right: (right: ToSchemaInstance<K>) => string]
   >,
-  options?: Omit<NonStreamingStepOptions<{ left: Array<T>; right: Array<K> }, Array<T & K>>, 'format'>,
-): Promise<StepData<Array<T & K>>>
+  options: StreamingStepOptions<S>,
+  leftSchema?: ZodArray<ZodType<T>>,
+  rightSchema?: ZodArray<ZodType<K>>,
+): StepResponseStream<Array<T & K>, S>
 
 export function leftInnerJoinStep<T extends object, K extends object>(
-  task: Task,
-  leftData: Data<Array<T>>,
-  rightData: Data<Array<K>>,
+  leftData: Array<T>,
+  rightData: Array<K>,
   where: Array<
     [left: (left: ToSchemaInstance<T>) => string, () => string, right: (right: ToSchemaInstance<K>) => string]
   >,
-  options: Omit<StreamingStepOptions<{ left: Array<T>; right: Array<K> }, Array<T & K>>, 'format'>,
-): StreamingStepData<T & K, Array<T & K>>
+  options?: NonStreamingStepOptions,
+  leftSchema?: ZodArray<ZodType<T>>,
+  rightSchema?: ZodArray<ZodType<K>>,
+): Promise<Array<T & K>>
 
-export function leftInnerJoinStep<T extends object, K extends object>(
-  task: Task,
-  leftData: Data<Array<T>>,
-  rightData: Data<Array<K>>,
+export function leftInnerJoinStep<T extends object, K extends object, S extends StreamTransform>(
+  leftData: Array<T>,
+  rightData: Array<K>,
   where: Array<
     [left: (left: ToSchemaInstance<T>) => string, () => string, right: (right: ToSchemaInstance<K>) => string]
   >,
-  options?: Omit<
-    | StreamingStepOptions<{ left: Array<T>; right: Array<K> }, Array<T & K>>
-    | NonStreamingStepOptions<{ left: Array<T>; right: Array<K> }, Array<T & K>>,
-    'format'
-  >,
-): Promise<StepData<Array<T & K>>> | StreamingStepData<T & K, Array<T & K>>
+  options?: StreamingStepOptions<S> | NonStreamingStepOptions,
+  leftSchema?: ZodArray<ZodType<T>>,
+  rightSchema?: ZodArray<ZodType<K>>,
+): Promise<Array<T & K>> | StepResponseStream<Array<T & K>, S>
 
-export function leftInnerJoinStep<T extends object, K extends object>(
-  task: Task,
-  leftData: Data<Array<T>>,
-  rightData: Data<Array<K>>,
+export function leftInnerJoinStep<T extends object, K extends object, S extends StreamTransform>(
+  leftData: Array<T>,
+  rightData: Array<K>,
   where: Array<
     [left: (left: ToSchemaInstance<T>) => string, () => string, right: (right: ToSchemaInstance<K>) => string]
   >,
-  options?: Omit<
-    | StreamingStepOptions<{ left: Array<T>; right: Array<K> }, Array<T & K>>
-    | NonStreamingStepOptions<{ left: Array<T>; right: Array<K> }, Array<T & K>>,
-    'format'
-  >,
-): Promise<StepData<Array<T & K>>> | StreamingStepData<T & K, Array<T & K>> {
-  const leftEntryInstace = buildSchemaInstance(
-    (leftData.schema as ZodArray<ZodType<T>>).element,
+  options?: StreamingStepOptions<S> | NonStreamingStepOptions,
+  leftInSchema?: ZodArray<ZodType<T>>,
+  rightInSchema?: ZodArray<ZodType<K>>,
+): Promise<Array<T & K>> | StepResponseStream<Array<T & K>, S> {
+  const resolvedLeftSchema = leftInSchema ?? getSchema(leftData)
+  const resolvedRightSchema = rightInSchema ?? getSchema(rightData)
+
+  const leftEntryInstance = buildSchemaInstance(
+    (resolvedLeftSchema as ZodArray<ZodType<T>>).element,
     undefined,
-    () => ` of each entry in ${leftData}`,
+    () => ` of each entry in the left data`,
   )
   const rightEntryInstance = buildSchemaInstance(
-    (rightData.schema as ZodArray<ZodType<K>>).element,
+    (resolvedRightSchema as ZodArray<ZodType<K>>).element,
     undefined,
-    () => ` of each entry in ${rightData}`,
+    () => ` of each entry in the right data`,
   )
-  return jsonArrayStep<T & K>(
-    task,
-    () =>
-      `For each entry in ${leftData} find the best matching entry in ${rightData} based on whether ${where
-        .map(([left, metric, right]) => `${left(leftEntryInstace)} ${metric()} ${right(rightEntryInstance)}`)
-        .join(' and ')}`,
+
+  let history = options?.history
+  if (history == null) {
+    history = new History()
+    options = { ...options, history }
+  }
+
+  return step<Array<T & K>, S>(
+    `For each entry in ${history.reference(leftData)} find the best matching entry in ${history.reference(rightData)} based on whether ${where
+      .map(([left, metric, right]) => `${left(leftEntryInstance)} ${metric()} ${right(rightEntryInstance)}`)
+      .join(' and ')}`,
     array(
       intersection(
-        (leftData.schema as ZodArray<ZodType<T>>).element,
-        (rightData.schema as ZodArray<ZodType<K>>).element,
+        (resolvedLeftSchema as ZodArray<ZodType<T>>).element,
+        (resolvedRightSchema as ZodArray<ZodType<K>>).element,
       ),
     ),
-    {
-      stream: options?.stream,
-      abortSignal: options?.abortSignal,
-      examples: options?.examples?.map(({ input, output, reason }) => ({
-        input: JSON.stringify(input),
-        output,
-        reason,
-      })),
-    } satisfies Omit<
-      StreamingStepOptions<string, Array<T & K>> | NonStreamingStepOptions<string, Array<T & K>>,
-      'format'
-    >,
+    options,
   )
 }
