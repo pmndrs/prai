@@ -30,7 +30,7 @@ function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
 }
 
 export function openai(options: ClientOptions): Provider {
-  const client = new OpenAI({ baseURL: 'https://api.openai.com/v1', ...options })
+  const client = new OpenAI(options)
   return {
     async query(model, messages, schema, abortSignal) {
       if (schema == null) {

@@ -51,48 +51,47 @@ export type JsonSchema =
       $defs?: Record<string, JsonSchema>
     }
 
-export function buildJsonSchema(schema: Schema) {
-  const reusedSchemaVisitor = new ReusedSchemaVisitor()
-  reusedSchemaVisitor.visit(schema)
-  const jsonSchemaVisitor = new JsonSchemaVisitor(reusedSchemaVisitor.reusedSchemas)
-  const result = jsonSchemaVisitor.visit(schema, true)
+export function buildJsonSchema(schema: Schema, supportsRefs: boolean = true) {
+  const jsonSchemaVisitor = new JsonSchemaVisitor(supportsRefs)
+  const result = jsonSchemaVisitor.visit(schema, [], true)
   result.$defs = jsonSchemaVisitor.$defs
   return result
 }
 
-class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
-  private referenceMap = new Map<Schema, string>()
+type Reference = { schema: Schema; name?: string; isRoot: boolean }
+
+class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [references: Array<Reference>, isRoot?: boolean]> {
   private definitionCounter: number = 0
   public $defs: Record<string, JsonSchema> = {}
 
-  constructor(private readonly reusedSchemas: Set<Schema>) {
+  constructor(private readonly supportsRefs: boolean) {
     super()
   }
 
-  visit(schema: Schema, isRoot: boolean = false): JsonSchema {
-    if (!this.reusedSchemas.has(schema)) {
-      return super.visit(schema)
+  visit(schema: Schema, references: Array<Reference>, isRoot: boolean = false): JsonSchema {
+    let reference = references.find(({ schema: s }) => s === schema)
+    if (reference != null) {
+      //recursion detected
+      if (!this.supportsRefs) {
+        throw new Error(`Recursive schema references are not supported by this provider`)
+      }
+      reference.name ??= reference.isRoot ? '#' : `definition_${1 + this.definitionCounter++}`
+      return { $ref: reference.isRoot ? reference.name : `#/$defs/${reference.name}` }
     }
-    let reference = this.referenceMap.get(schema)
-    if (isRoot && reference == null) {
-      this.referenceMap.set(schema, '#')
-      return super.visit(schema)
+    reference = { schema, isRoot }
+    const result = super.visit(schema, [...references, reference])
+    if (reference?.name != null && !isRoot) {
+      this.$defs[reference?.name] = result
+      return { $ref: reference.isRoot ? reference.name : `#/$defs/${reference.name}` }
     }
-    if (reference == null) {
-      const name = `definition_${1 + this.definitionCounter++}`
-      this.referenceMap.set(schema, (reference = `#/$defs/${name}`))
-      this.$defs[name] = super.visit(schema)
-    }
-    return {
-      $ref: reference,
-    }
+    return result
   }
 
-  visitArray(schema: ZodArray<any>): JsonSchema {
+  visitArray(schema: ZodArray<any>, references: Array<Reference>): JsonSchema {
     return {
       type: 'array',
       description: schema.description,
-      items: this.visit(schema.element),
+      items: this.visit(schema.element, references),
     }
   }
 
@@ -111,7 +110,7 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
     }
   }
 
-  visitIntersection(schema: ZodIntersection<any, any>): JsonSchema {
+  visitIntersection(schema: ZodIntersection<any, any>, references: Array<Reference>): JsonSchema {
     const properties: any = {}
     const intersections = flattenIntersections(schema)
     for (const intersection of intersections) {
@@ -119,7 +118,7 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
         throw new Error(`Union options must be objects`)
       }
       for (const key in intersection.shape) {
-        properties[key] = this.visit(intersection.shape[key])
+        properties[key] = this.visit(intersection.shape[key], references)
       }
     }
     return {
@@ -131,8 +130,8 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
     }
   }
 
-  visitLazy(schema: ZodLazy<any>): JsonSchema {
-    return this.visit(schema.schema)
+  visitLazy(schema: ZodLazy<any>, references: Array<Reference>): JsonSchema {
+    return this.visit(schema.schema, references)
   }
 
   visitLiteral(schema: ZodLiteral<any>): JsonSchema {
@@ -150,10 +149,10 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
     }
   }
 
-  visitObject(schema: ZodObject<any>): JsonSchema {
+  visitObject(schema: ZodObject<any>, references: Array<Reference>): JsonSchema {
     const properties: any = {}
     for (const key in schema.shape) {
-      properties[key] = this.visit(schema.shape[key])
+      properties[key] = this.visit(schema.shape[key], references)
     }
     return {
       type: 'object',
@@ -164,9 +163,9 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
     }
   }
 
-  visitNullable(schema: ZodNullable<any>): JsonSchema {
+  visitNullable(schema: ZodNullable<any>, references: Array<Reference>): JsonSchema {
     return {
-      anyOf: [this.visit(schema.unwrap()), { type: 'null' }],
+      anyOf: [this.visit(schema.unwrap(), references), { type: 'null' }],
     }
   }
 
@@ -177,12 +176,12 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [isRoot?: boolean]> {
     }
   }
 
-  visitUnion(schema: ZodUnion<any>): JsonSchema {
+  visitUnion(schema: ZodUnion<any>, references: Array<Reference>): JsonSchema {
     if (!Array.isArray(schema.options)) {
       throw new Error(`the options in the union schema must be in an array`)
     }
     return {
-      anyOf: schema.options.map((intersectedSchema) => this.visit(intersectedSchema)),
+      anyOf: schema.options.map((intersectedSchema) => this.visit(intersectedSchema, references)),
     }
   }
 }

@@ -1,4 +1,4 @@
-import { consoleLogger, groq, History, Model, step } from 'prai'
+import { consoleLogger, gemini, groq, History, Model, step } from 'prai'
 import { z } from 'zod'
 
 // 1. Inputs for our theme generation process
@@ -16,8 +16,8 @@ const colorScheme = z
 
 // 3. Create a model based on an AI provider (openai, groq, more support comming soon)
 const model = new Model({
-  name: 'meta-llama/llama-4-maverick-17b-128e-instruct',
-  provider: groq({ apiKey: process.env.API_KEY }),
+  name: 'gemini-2.5-flash-preview-05-20',
+  provider: gemini({ apiKey: process.env.API_KEY }),
 })
 
 // 4. create a chat history

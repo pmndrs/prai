@@ -36,8 +36,11 @@
   "dependencies": {
     "@biomejs/js-api": "^0.7.1",
     "@biomejs/wasm-nodejs": "^1.9.4",
+    "@google/genai": "^1.4.0",
     "chalk": "^5.4.1",
+    "i": "^0.3.7",
     "imurmurhash": "^0.1.4",
+    "npm": "^11.4.1",
     "openai": "^4.85.1"
   },
   "peerDependencies": {

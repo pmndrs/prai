@@ -3,7 +3,7 @@ import { Provider } from '../model.js'
 import { Message } from '../step.js'
 import { buildJsonSchema } from '../schema/json.js'
 import { Schema, ZodObject, ZodUnion } from 'zod'
-import { extractResultProperty, streamingQuery, query } from './utils.js'
+import { extractResultProperty, streamingQueryOpenai, queryOpenai } from './utils.js'
 
 function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
   let responseSchema = buildJsonSchema(schema)
@@ -35,27 +35,27 @@ export function groq(options: ClientOptions): Provider {
     async query(model, messages, schema, abortSignal) {
       const transformedMessages = transformMessages(messages)
       if (schema == null) {
-        return query(model, client, transformedMessages, abortSignal)
+        return queryOpenai(model, client, transformedMessages, abortSignal)
       }
       if (!(schema instanceof ZodObject || schema instanceof ZodUnion)) {
         const { result } = JSON.parse(
-          await query(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, true)),
+          await queryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, true)),
         )
         return JSON.stringify(result)
       }
-      return query(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, false))
+      return queryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, false))
     },
     async *streamingQuery(model, messages, schema, abortSignal) {
       const transformedMessages = transformMessages(messages)
       if (schema == null) {
-        return streamingQuery(model, client, transformedMessages, abortSignal)
+        return streamingQueryOpenai(model, client, transformedMessages, abortSignal)
       }
       if (!(schema instanceof ZodObject || schema instanceof ZodUnion)) {
         return extractResultProperty(
-          streamingQuery(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, true)),
+          streamingQueryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, true)),
         )
       }
-      return streamingQuery(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, false))
+      return streamingQueryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, false))
     },
   }
 }

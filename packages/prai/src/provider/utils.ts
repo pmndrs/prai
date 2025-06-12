@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import { Message } from '../step.js'
 
-export async function* streamingQuery(
+export async function* streamingQueryOpenai(
   model: string,
   client: OpenAI,
   messages: Array<Message>,
@@ -24,7 +24,7 @@ export async function* streamingQuery(
   }
 }
 
-export async function query(
+export async function queryOpenai(
   model: string,
   client: OpenAI,
   messages: Array<Message>,
