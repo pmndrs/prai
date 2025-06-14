@@ -15,6 +15,7 @@ function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
         result: responseSchema,
       },
       required: ['result'],
+      propertyOrdering: ['result'],
     }
   }
   return {

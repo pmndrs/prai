@@ -56,6 +56,7 @@ describe('schema-json', () => {
         age: { type: 'number' },
         isActive: { type: 'boolean' },
       },
+      propertyOrdering: ['name', 'age', 'isActive'],
       required: ['name', 'age', 'isActive'],
       $defs: {},
     })
@@ -112,6 +113,7 @@ describe('schema-json', () => {
         },
       },
       required: ['name', 'description'],
+      propertyOrdering: ['name', 'description'],
       $defs: {},
     })
   })
@@ -144,6 +146,7 @@ describe('schema-json', () => {
         },
       },
       required: ['userId', 'name', 'adminId', 'permissions'],
+      propertyOrdering: ['userId', 'name', 'adminId', 'permissions'],
       $defs: {},
     })
   })
@@ -160,12 +163,14 @@ describe('schema-json', () => {
           additionalProperties: false,
           properties: { id: { type: 'string' } },
           required: ['id'],
+          propertyOrdering: ['id'],
         },
         {
           type: 'object',
           additionalProperties: false,
           properties: { name: { type: 'string' } },
           required: ['name'],
+          propertyOrdering: ['name'],
         },
       ],
       $defs: {},
@@ -197,6 +202,7 @@ describe('schema-json', () => {
           },
         },
         required: ['id', 'items'],
+        propertyOrdering: ['id', 'items'],
         additionalProperties: false,
         $defs: {
           definition_1: { $ref: '#' },
@@ -308,6 +314,7 @@ describe('schema-json', () => {
           },
         },
         required: ['name', 'subcategories'],
+        propertyOrdering: ['name', 'subcategories'],
         $defs: {},
       })
     })
@@ -352,9 +359,11 @@ describe('schema-json', () => {
             additionalProperties: false,
             properties: { title: { type: 'string' }, head: { $ref: '#' } },
             required: ['title', 'head'],
+            propertyOrdering: ['title', 'head'],
           },
         },
         required: ['name', 'department'],
+        propertyOrdering: ['name', 'department'],
         $defs: {},
       })
     })

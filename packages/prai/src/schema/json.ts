@@ -27,6 +27,7 @@ export type JsonSchema =
        */
       required: Array<string>
       $defs?: Record<string, JsonSchema>
+      propertyOrdering: Array<string>
     }
   | { type: 'string'; description?: string; enum?: Array<string>; $defs?: Record<string, JsonSchema> }
   | {
@@ -127,6 +128,7 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [references: Array<Ref
       properties,
       required: Object.keys(properties),
       description: schema.description,
+      propertyOrdering: Object.keys(properties),
     }
   }
 
@@ -160,6 +162,7 @@ class JsonSchemaVisitor extends SchemaVisitor<JsonSchema, [references: Array<Ref
       properties,
       required: Object.keys(properties),
       description: schema.description,
+      propertyOrdering: Object.keys(properties),
     }
   }
 
