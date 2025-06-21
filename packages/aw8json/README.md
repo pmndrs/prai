@@ -1,13 +1,13 @@
-# awaitjson
+# aw8json
 
 > stream async iterables and promises inside of a json
 
 ```ts
-const stream = AwaitJSON.stringify({ hello: Promise.resolve("world") })
+const stream = Aw8JSON.stringify({ hello: Promise.resolve("world") })
 
 //send stream via REST body
 
-const result = await AwaitJSON.parse(stream)
+const result = await Aw8JSON.parse(stream)
 result.hello.then(console.log)
 //logs "world"
 ```

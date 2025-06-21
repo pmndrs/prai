@@ -1,5 +1,5 @@
 {
-    "name": "awaitjson",
+    "name": "aw8json",
     "type": "module",
     "main": "src/index.ts",
     "publishConfig": {
