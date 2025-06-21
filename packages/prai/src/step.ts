@@ -1,8 +1,9 @@
 import { Schema } from 'zod'
 import { Model, Provider } from './model.js'
 import { buildStepRequestMessage, History } from './history.js'
-import { isAsyncIterable } from './utils.js'
+
 import { mock } from './provider/mock.js'
+import { isAsyncIterable } from 'asyncjson'
 
 export type MessageContent = Array<
   | { type: 'text'; text: string }

@@ -2,7 +2,6 @@
 export * from './step.js'
 export * from './model.js'
 export * from './history.js'
-export * from './async-json.js'
 export * from './random.js'
 export * from './console-logger.js'
 

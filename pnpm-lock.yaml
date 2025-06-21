@@ -85,6 +85,12 @@ importers:
         specifier: workspace:^
         version: link:../../packages/prai
 
+  packages/asyncjson:
+    devDependencies:
+      vitest:
+        specifier: ^3.0.5
+        version: 3.0.8(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.3)(yaml@2.7.0)
+
   packages/prai:
     dependencies:
       '@biomejs/js-api':
@@ -96,6 +102,9 @@ importers:
       '@google/genai':
         specifier: ^1.4.0
         version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)
+      asyncjson:
+        specifier: workspace:^
+        version: link:../asyncjson
       chalk:
         specifier: ^5.4.1
         version: 5.4.1

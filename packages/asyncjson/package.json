@@ -1,0 +1,39 @@
+{
+    "name": "asyncjson",
+    "type": "module",
+    "main": "src/index.ts",
+    "publishConfig": {
+      "main": "dist/index.js"
+    },
+    "scripts": {
+      "build": "tsc",
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "check:prettier": "prettier --check src",
+      "check:eslint": "eslint 'src/**/*.{tsx,ts}'",
+      "fix:prettier": "prettier --write src",
+      "fix:eslint": "eslint 'src/**/*.{tsx,ts}' --fix"
+    },
+    "files": [
+      "dist"
+    ],
+    "description": "stream async iterables and promises inside of a json",
+    "version": "0.0.0",
+    "license": "MIT",
+    "homepage": "https://github.com/pmndrs/prai",
+    "author": "Bela Bohlender",
+    "keywords": [
+      "async",
+      "iterables",
+      "javascript",
+      "typescript"
+    ],
+    "repository": {
+      "type": "git",
+      "url": "git@github.com:pmndrs/prai.git"
+    },
+    "devDependencies": {
+      "vitest": "^3.0.5"
+    }
+  }
+  
