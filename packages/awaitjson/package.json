@@ -1,5 +1,5 @@
 {
-    "name": "asyncjson",
+    "name": "awaitjson",
     "type": "module",
     "main": "src/index.ts",
     "publishConfig": {

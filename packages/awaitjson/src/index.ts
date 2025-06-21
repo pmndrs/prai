@@ -74,7 +74,7 @@ export async function parse(text: AsyncIterable<string>): Promise<any> {
   return result
 }
 
-export const AsyncJSON = { stringify, parse }
+export const AwaitJSON = { stringify, parse }
 
 async function* decodeLines(input: AsyncIterable<string>): AsyncIterable<string> {
   let buffer = ''

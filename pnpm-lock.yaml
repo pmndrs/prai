@@ -85,7 +85,7 @@ importers:
         specifier: workspace:^
         version: link:../../packages/prai
 
-  packages/asyncjson:
+  packages/awaitjson:
     devDependencies:
       vitest:
         specifier: ^3.0.5
@@ -102,9 +102,9 @@ importers:
       '@google/genai':
         specifier: ^1.4.0
         version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)
-      asyncjson:
+      awaitjson:
         specifier: workspace:^
-        version: link:../asyncjson
+        version: link:../awaitjson
       chalk:
         specifier: ^5.4.1
         version: 5.4.1

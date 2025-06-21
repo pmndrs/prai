@@ -34,7 +34,7 @@
     "url": "git@github.com:pmndrs/prai.git"
   },
   "dependencies": {
-    "asyncjson": "workspace:^",
+    "awaitjson": "workspace:^",
     "@biomejs/js-api": "^0.7.1",
     "@biomejs/wasm-nodejs": "^1.9.4",
     "@google/genai": "^1.4.0",

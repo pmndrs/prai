@@ -2,7 +2,7 @@ import { Schema } from 'zod'
 import { isStepResponse, Message, MessageContent, wrapStepResponse } from './step.js'
 import { getSchemaOptional, setSchema } from './schema/store.js'
 import { buildSchemaType } from './schema/type.js'
-import { isAsyncIterable } from 'asyncjson'
+import { isAsyncIterable } from 'awaitjson'
 
 export function buildStepRequestMessage(
   stepId: number,

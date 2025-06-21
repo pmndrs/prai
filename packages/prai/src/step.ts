@@ -3,7 +3,7 @@ import { Model, Provider } from './model.js'
 import { buildStepRequestMessage, History } from './history.js'
 
 import { mock } from './provider/mock.js'
-import { isAsyncIterable } from 'asyncjson'
+import { isAsyncIterable } from 'awaitjson'
 
 export type MessageContent = Array<
   | { type: 'text'; text: string }

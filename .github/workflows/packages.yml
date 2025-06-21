@@ -62,8 +62,8 @@ jobs:
       - name: Set publishing config
         run: pnpm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
 
-      - name: Deploy asyncjson Package
-        working-directory: ./packages/asyncjson
+      - name: Deploy awaitjson Package
+        working-directory: ./packages/awaitjson
         run: pnpm publish --access public --no-git-checks --tag ${{ steps.gitversion.outputs.preReleaseLabel == '' && 'latest' || steps.gitversion.outputs.preReleaseLabel }}
 
       - name: Deploy prai Package
