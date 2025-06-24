@@ -96,13 +96,19 @@ const result = await step(
 console.log(result.value)
 ```
 
-### TODO for release
+## [Documentation](https://pmndrs.github.io/prai)
 
-- prai-trace?
+Explore the complete **prai** documentation to learn everything from basic concepts to advanced patterns:
 
-### Roadmap
+### Getting Started
+- **[Introduction](https://pmndrs.github.io/prai/getting-started/introduction)** - Overview of prai concepts and core philosophy
+- **[Your First Workflow](https://pmndrs.github.io/prai/getting-started/first-workflow)** - Step-by-step tutorial building a complete brand theme generator
+- **[Special Step Types](https://pmndrs.github.io/prai/getting-started/special-step-typestypescript)** - Specialized functions for data processing (`mapStep`, `filterStep`, `combineStep`, etc.)
+- **[Advanced Usage](https://pmndrs.github.io/prai/getting-started/advanced-usagetypescript)** - Streaming responses, conditional workflows, model fallbacks, and testing strategies
+- **[Best Practices](https://pmndrs.github.io/prai/getting-started/best-practicestypescript)** - Production guidelines and optimization tips
 
-- Metrics (prometheus integration for metrics)
-- prebuild image & audio embeddings for reuse?
-- RAG step?
-- toolStep (support tool calls to build agent steps; make sure we can do a multi-step with a tool call and then e.g. a json result for e.g. returning specific data from a general search)
+### Core Concepts
+- **[Steps](https://pmndrs.github.io/prai/concepts/steptypescript)** - Fundamental building blocks of prai workflows with schema integration and examples
+- **[Models](https://pmndrs.github.io/prai/concepts/modeltypescript)** - AI provider abstraction supporting OpenAI, Groq, Gemini, and mock providers
+- **[History](https://pmndrs.github.io/prai/concepts/historytypescript)** - Conversation tracking, reference system, subtasks, and multimodal support
+
