@@ -63,20 +63,14 @@ Writing prompts in natural language is great—until they become messy with mult
 
 ## Core Concepts
 
-### Steps
+### [Steps](../concepts/step.mdx)
 Steps are the fundamental building blocks of prai. Each step represents a single instruction to an AI model with a defined input prompt and expected output schema using [Zod](https://zod.dev/). This ensures type safety and forces the AI to return data in the exact format you need.
 
-Learn more about the [Step Concept](../concepts/step.mdx)
-
-### History
+### [History](../concepts/history.mdx)
 History tracks the conversation flow between steps, allowing later steps to reference results from previous steps. This creates a coherent workflow where each step builds upon previous results.
 
-Learn more about the [History Concept](../concepts/history.mdx)
-
-### Models
+### [Model](../concepts/model.mdx)
 Models represent AI providers (OpenAI, Groq, Gemini) and handle the actual communication with AI services. They abstract away provider-specific details.
-
-Learn more about the [Model Concept](../concepts/model.mdx)
 
 ## When to Use prai
 
