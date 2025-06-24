@@ -190,18 +190,6 @@ describe('History', () => {
       })
     })
 
-    it('should dispatch history-forgot event', () => {
-      const listener = vi.fn()
-      history.addEventListener('history-forgot', listener)
-
-      history.forget()
-
-      expect(listener).toHaveBeenCalledWith({
-        type: 'history-forgot',
-        historyId: history.id,
-      })
-    })
-
     it('should dispatch subtask-start event', () => {
       const listener = vi.fn()
       history.addEventListener('subtask-start', listener)
@@ -314,40 +302,6 @@ describe('History', () => {
       expect(history.add(data2)).toBe('Data2')
       expect(history.add(imageBuffer, { type: 'image' })).toBe('Image1')
       expect(history.add(audioBuffer, { type: 'wav' })).toBe('Audio1')
-    })
-  })
-
-  describe('forget functionality', () => {
-    it('should clear all history state', async () => {
-      // Add some data
-      const schema = z.string()
-      const stepId = history.addStepRequest('test', schema)
-      await history.addStepResponse(stepId, Promise.resolve('response'), schema)
-      history.add({ test: 'data' })
-
-      expect(history['messages']).toHaveLength(3)
-
-      history.forget()
-
-      expect(history['messages']).toHaveLength(0)
-    })
-
-    it('should prevent forgetting while step is executing', () => {
-      const schema = z.string()
-      history.addStepRequest('test', schema)
-
-      expect(() => history.forget()).toThrow('Step1 is still executing. Cannot forget history.')
-    })
-
-    it('should allow starting new steps after forgetting', async () => {
-      const schema = z.string()
-      const stepId1 = history.addStepRequest('first', schema)
-      await history.addStepResponse(stepId1, Promise.resolve('response'), schema)
-
-      history.forget()
-
-      const stepId2 = history.addStepRequest('second', schema)
-      expect(stepId2).toBe(0) // Should reset step counter
     })
   })
 
@@ -560,27 +514,6 @@ describe('History', () => {
 
       const newRequestContent = clonedMessages[2].content[0] as { type: 'text'; text: string }
       expect(newRequestContent.text).toContain('type Step2Response = Step1Response')
-    })
-
-    it('should reset schema definitions after forget', async () => {
-      const schema = z.object({ value: z.string() })
-
-      // Add step before forget
-      const stepId1 = history.addStepRequest('Before forget', schema)
-      await history.addStepResponse(stepId1, Promise.resolve({ value: 'test' }), schema)
-
-      // Forget history
-      history.forget()
-
-      // Add step after forget
-      const stepId2 = history.addStepRequest('After forget', schema)
-
-      expect(history['messages']).toHaveLength(1)
-      const requestContent = history['messages'][0].content[0] as { type: 'text'; text: string }
-
-      // Should start with Step1 again after forget
-      expect(requestContent.text).toContain('# Step1')
-      expect(requestContent.text).toContain('type Step1Response = {')
     })
   })
 

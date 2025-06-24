@@ -59,7 +59,6 @@ export type EventMap = {
   'subtask-start': SubtaskStartEvent
   'data-reference-added': DataReferenceAddedEvent
   'subtask-response-referenced': SubtaskReponseReferencedEvent
-  'history-forgot': HistoryForgotEvent
 }
 
 export type StepRequestEvent = {
@@ -97,11 +96,6 @@ export type SubtaskReponseReferencedEvent = {
   historyId: string
   requestMessage: Message
   responseMessage: Message
-}
-
-export type HistoryForgotEvent = {
-  type: 'history-forgot'
-  historyId: string
 }
 
 export type HistoryState = {
@@ -145,7 +139,7 @@ export class History {
 
   setState(state: ReturnType<History['getState']>): void {
     if (this.currentlyExecutingStepId != null) {
-      throw new Error(`Step${this.currentlyExecutingStepId + 1} is still executing. Cannot forget history.`)
+      throw new Error(`Step${this.currentlyExecutingStepId + 1} is still executing. Cannot write the history.`)
     }
     this.messages = [...state.messages]
     this.referenceMap = new Map(state.referenceMap)
@@ -270,17 +264,6 @@ export class History {
       return `response of Subtask${subtaskId + 1}`
     }
     this.referenceMap.set(value, buildReference)
-  }
-
-  forget(): void {
-    this.setState({
-      count: { audios: 0, datas: 0, images: 0, steps: 0, subtasks: 0 },
-      messages: [],
-      referenceMap: [],
-      schemaTypeDefinitions: [],
-      usedSchemas: [],
-    })
-    this.dispatchEvent('history-forgot', { type: 'history-forgot', historyId: this.id })
   }
 
   /**

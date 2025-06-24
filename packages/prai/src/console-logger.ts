@@ -195,13 +195,4 @@ export function consoleLogger(history: History, options?: { abort?: AbortSignal 
     },
     { signal: abortSignal },
   )
-
-  history.addEventListener(
-    'history-forgot',
-    (event) => {
-      logHeader(event.historyId, 'History Cleared', Date.now(), colors.warning)
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
 }
