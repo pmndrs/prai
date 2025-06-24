@@ -25,15 +25,6 @@ With **prai**, prompts become code—structured, maintainable, and debuggable—
 npm install prai
 ```
 
-Let's look at some **prai** <ins>use cases</ins>.
-
-| Desinging a Homepage       | ![](./diagrams/homepage.png)        |
-| -------------------------- | ----------------------------------- |
-| Creating a Presentation    | ![](./diagrams/presentation.png)    |
-| Creating a Database Schema | ![](./diagrams/database-schema.png) |
-
-We recommend **prai** for problems that are best solved with a structured process, where some steps involve reasoning or decision-making.
-
 ### What does it look like?
 
 ```ts
