@@ -15,7 +15,7 @@ History is **prai**'s conversation tracking system that maintains context across
 
 ## Basic Usage
 
-```typescript {7,14} showLineNumbers
+```typescript {4,14} showLineNumbers
 import { History } from 'prai'
 
 // Create a new history instance
@@ -41,7 +41,7 @@ The reference system allows steps to refer to previous results in a natural way:
 
 ### Basic References
 
-```typescript {2,11} showLineNumbers
+```typescript {12} showLineNumbers
 const userProfile = await step(
   'Create a user profile',
   z.object({
@@ -66,16 +66,16 @@ const recommendations = await step(
 
 Add custom data to history with descriptions:
 
-```typescript {3,10} showLineNumbers
+```typescript {3,9} showLineNumbers
 // Add external data to history
 const marketData = { revenue: 1000000, growth: 0.15, customers: 5000 }
-const dataRef = history.add(marketData, {
+history.add(marketData, {
   description: 'Q3 market performance data',
   type: 'data'
 })
 
 const analysis = await step(
-  `Analyze this market data: ${dataRef}`,
+  `Analyze this market data: ${history.reference(marketData)}`,
   analysisSchema,
   { model, history }
 )
@@ -85,17 +85,17 @@ const analysis = await step(
 
 Reference data that's derived from other data:
 
-```typescript {1,4,11} showLineNumbers
+```typescript {4-7,10} showLineNumbers
 const salesData = await step('Get sales data', salesSchema, { model, history })
 
 const processedData = processSalesData(salesData)
-const processedRef = history.add(processedData, {
+history.add(processedData, {
   derived: { from: salesData, by: 'data processing pipeline' },
   description: 'Processed sales metrics'
 })
 
 const insights = await step(
-  `Generate insights from ${processedRef}`,
+  `Generate insights from ${history.reference(processedData)}`,
   insightsSchema,
   { model, history }
 )
@@ -153,7 +153,7 @@ const transcription = await step(
 
 Subtasks allow you to create isolated workflows within a larger history:
 
-```typescript {4,20,31} showLineNumbers
+```typescript {5,21,35-36} showLineNumbers
 const history = new History()
 
 // Run parallel subtasks
@@ -201,7 +201,7 @@ const strategy = await step(
 
 History can be serialized and restored:
 
-```typescript {2,6} showLineNumbers
+```typescript showLineNumbers
 // Save history state
 const historyState = history.getState()
 const serialized = JSON.stringify(historyState)
@@ -218,7 +218,7 @@ restoredHistory.setState(JSON.parse(serialized))
 
 History provides an event system for observability:
 
-```typescript {6,9} showLineNumbers
+```typescript showLineNumbers
 import { consoleLogger } from 'prai'
 
 const history = new History()

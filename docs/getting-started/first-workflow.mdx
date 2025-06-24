@@ -59,7 +59,7 @@ Create a `tsconfig.json`:
 
 Create `src/index.ts`:
 
-```typescript {1,6,14} showLineNumbers
+```typescript showLineNumbers
 import { History, Model, openai, step, consoleLogger } from 'prai'
 import { z } from 'zod'
 
@@ -92,7 +92,7 @@ main().catch(console.error)
 
 Add the first step to generate adjectives that describe your brand:
 
-```typescript {4} showLineNumbers
+```typescript showLineNumbers
 // Add this inside the main() function
 
 // Step 1: Generate brand adjectives
@@ -109,7 +109,7 @@ console.log('Brand adjectives:', adjectives)
 
 Define a reusable color schema and create a basic theme:
 
-```typescript {4,13} showLineNumbers
+```typescript showLineNumbers
 // Add this before the main() function
 
 // Reusable schema for HSL colors
@@ -146,7 +146,7 @@ console.log('Core theme:', coreTheme)
 
 Create a comprehensive design system theme:
 
-```typescript {4} showLineNumbers
+```typescript showLineNumbers
 // Add this inside main() after the coreTheme step
 
 // Step 3: Expand to full design system
@@ -195,7 +195,7 @@ console.log('Full theme generated!', fullTheme)
 
 Add a utility function to convert the theme to CSS variables:
 
-```typescript {4,9} showLineNumbers
+```typescript showLineNumbers
 // Add this before main()
 
 function hslToString(color: { hue: number; saturation: number; lightness: number }): string {

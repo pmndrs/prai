@@ -14,7 +14,7 @@ Executing a step requires 3 things:
 2. **Schema**: [Zod](https://zod.dev/) schema defining the expected output structure
 3. **Options**: Configuration including model, history, and other settings
 
-```typescript {4,10} showLineNumbers
+```typescript showLineNumbers
 import { step } from 'prai'
 import { z } from 'zod'
 
@@ -38,7 +38,7 @@ const result = await step(
 - **`abortSignal`**: AbortSignal for canceling the step
 - **`systemPrompt`**: System-level instructions for the AI
 
-```typescript {7} showLineNumbers
+```typescript {5-8} showLineNumbers
 const result = await step(
   'Analyze this data and provide insights',
   analysisSchema,
@@ -58,7 +58,7 @@ const result = await step(
 
 Provide examples to guide the AI's output:
 
-```typescript {9} showLineNumbers
+```typescript {10-21} showLineNumbers
 const result = await step(
   'Classify the sentiment of this text',
   z.object({
@@ -110,7 +110,7 @@ const result = await stream.getValue()
 
 Steps use [Zod](https://zod.dev/) schemas to ensure type safety and guide AI output:
 
-```typescript {10} showLineNumbers
+```typescript showLineNumbers
 // Simple schema
 const userSchema = z.object({
   name: z.string(),

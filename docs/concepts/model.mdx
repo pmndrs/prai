@@ -12,7 +12,7 @@ A Model consists of a **Provider** (the AI service e.g. OpenAI, Groq, Gemini) an
 
 ## Basic Usage
 
-```typescript {3,9} showLineNumbers
+```typescript {4-5} showLineNumbers
 import { Model, openai } from 'prai'
 
 const model = new Model({
@@ -32,7 +32,7 @@ const result = await step(
 
 ### OpenAI
 
-```typescript {3} showLineNumbers
+```typescript {5-7} showLineNumbers
 import { openai } from 'prai'
 
 const openaiModel = new Model({
@@ -45,7 +45,7 @@ const openaiModel = new Model({
 
 ### Groq
 
-```typescript {3} showLineNumbers
+```typescript {5-7} showLineNumbers
 import { groq } from 'prai'
 
 const groqModel = new Model({
@@ -58,7 +58,7 @@ const groqModel = new Model({
 
 ### Google Gemini
 
-```typescript {3} showLineNumbers
+```typescript {5-7} showLineNumbers
 import { gemini } from 'prai'
 
 const geminiModel = new Model({
@@ -76,7 +76,7 @@ const geminiModel = new Model({
 
 For testing and development:
 
-```typescript {3,9} showLineNumbers
+```typescript {5} showLineNumbers
 import { mock } from 'prai'
 
 const mockModel = new Model({

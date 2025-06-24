@@ -20,7 +20,7 @@ nav: 3
 
 Process arrays of data with consistent prompts applied to each element.
 
-```typescript {9} showLineNumbers
+```typescript showLineNumbers
 import { mapStep } from 'prai'
 
 const products = [
@@ -64,7 +64,7 @@ const results = await mapStep(
 
 Filter arrays based on AI-powered criteria that would be difficult to express programmatically.
 
-```typescript {10} showLineNumbers
+```typescript showLineNumbers
 import { filterStep } from 'prai'
 
 const articles = [
@@ -88,7 +88,7 @@ console.log(techArticles)
 
 ### Complex Filtering
 
-```typescript {7} showLineNumbers
+```typescript showLineNumbers
 const candidates = [
   { name: 'Alice', experience: '5 years React, 3 years Node.js', education: 'CS Degree' },
   { name: 'Bob', experience: '2 years Python, ML research', education: 'PhD Physics' },
@@ -110,7 +110,7 @@ const suitable = await filterStep(
 
 Intelligently merge multiple data sources or combine related information.
 
-```typescript {22} showLineNumbers
+```typescript showLineNumbers
 import { combineStep } from 'prai'
 
 const userFeedback = [
@@ -155,7 +155,7 @@ const report = await combineStep(
 
 Choose the best option from a set of alternatives based on given criteria.
 
-```typescript {25} showLineNumbers
+```typescript showLineNumbers
 import { selectStep } from 'prai'
 
 const designOptions = [
@@ -191,7 +191,7 @@ console.log('Selected design:', selectedDesign)
 
 ### Select with Custom Scoring
 
-```typescript {1} showLineNumbers
+```typescript showLineNumbers
 const bestCandidate = await selectStep(
   candidates,
   'Select the best candidate for a senior developer role, considering technical skills, leadership experience, and cultural fit',
@@ -207,7 +207,7 @@ const bestCandidate = await selectStep(
 
 Check if all items in an array meet specific criteria.
 
-```typescript {9} showLineNumbers
+```typescript showLineNumbers
 import { allStep } from 'prai'
 
 const documents = [
@@ -234,7 +234,7 @@ console.log('All documents compliant:', allCompliant)
 
 Check if any items in an array meet specific criteria.
 
-```typescript {9} showLineNumbers
+```typescript showLineNumbers
 import { someStep } from 'prai'
 
 const emails = [
@@ -259,7 +259,7 @@ if (hasUrgent) {
 
 Join or match data from different sources based on intelligent criteria.
 
-```typescript {13} showLineNumbers
+```typescript showLineNumbers
 import { joinStep } from 'prai'
 
 const customers = [
@@ -297,7 +297,7 @@ const joined = await joinStep(
 
 Split data into different categories based on AI analysis.
 
-```typescript {10} showLineNumbers
+```typescript showLineNumbers
 import { separateStep } from 'prai'
 
 const mixedContent = [
@@ -327,7 +327,7 @@ console.log(separated)
 
 Generate lists based on criteria or context.
 
-```typescript {10} showLineNumbers
+```typescript showLineNumbers
 import { listStep } from 'prai'
 
 const projectContext = {
