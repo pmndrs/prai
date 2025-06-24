@@ -1,3 +1,9 @@
+---
+title: Best Practices
+description: guidelines and optimization tips for building reliable, maintainable, and performant prai workflows
+nav: 5
+---
+
 # Best Practices
 
 

@@ -1,3 +1,9 @@
+---
+title: Models
+description: What is a prai model?
+nav: 12
+---
+
 # Models
 
 Models in prai represent AI providers and handle the communication with AI services. They abstract away provider-specific details while providing a consistent interface for all AI interactions.

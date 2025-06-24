@@ -1,3 +1,9 @@
+---
+title: Your First Workflow
+description: Build a complete prai workflow from scratch
+nav: 2
+---
+
 # Your First prai Workflow
 
 In this tutorial, we'll build a complete workflow that generates a brand theme. This will teach you the fundamental concepts of prai through hands-on practice.

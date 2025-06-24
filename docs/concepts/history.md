@@ -1,3 +1,9 @@
+---
+title: History
+description: What is prai's history?
+nav: 13
+---
+
 # History
 
 History is **prai**'s conversation tracking system that maintains context across multiple steps, enabling complex workflows where later steps can reference and build upon previous results.

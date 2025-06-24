@@ -1,3 +1,9 @@
+---
+title: Special Step Types
+description: Learn about specialized prai step functions for data processing
+nav: 3
+---
+
 # Special Step Types
 
 **prai** provides specialized step functions beyond the basic `step()` function for common data processing patterns. These functions make it easy to work with arrays, filter data, combine results, and perform other operations in AI workflows.

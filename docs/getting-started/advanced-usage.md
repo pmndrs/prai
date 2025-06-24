@@ -1,3 +1,9 @@
+---
+title: Advanced Usage
+description: advanced prai features including streaming responses, conditional workflows, model fallbacks, and testing strategies
+nav: 4
+---
+
 # Advanced Usage
 
 This guide covers advanced **prai** features and patterns for building advanced AI workflows.

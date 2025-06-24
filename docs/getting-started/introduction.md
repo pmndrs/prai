@@ -1,3 +1,9 @@
+---
+title: Introduction
+description: Get started with prai
+nav: 1
+---
+
 # Introduction to prai
 
 **prai** (programmable ai) is a JavaScript framework for building step-by-step LLM instructions. It transforms messy natural language prompts into structured, maintainable, and debuggable code, leading to high-quality, reliable outputs.

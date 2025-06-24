@@ -1,3 +1,9 @@
+---
+title: Steps
+description: What is a prai step?
+nav: 11
+---
+
 # Steps
 
 Steps are the fundamental building blocks of prai workflows. Each step represents a single instruction to an AI model with a defined input prompt and expected output schema.
