@@ -4,10 +4,7 @@ description: Get started with prai
 nav: 1
 ---
 
-# Introduction to prai
-
 **prai** (programmable ai) is a JavaScript framework for building step-by-step LLM instructions. It transforms messy natural language prompts into structured, maintainable, and debuggable code, leading to high-quality, reliable outputs.
-
 
 ```bash
 npm install prai
@@ -19,7 +16,7 @@ pnpm add prai
 
 Here's a simple example that generates brand adjectives and creates a color theme:
 
-```typescript
+```typescript {1,14,23} showLineNumbers
 import { History, Model, openai, step } from 'prai'
 import { z } from 'zod'
 
@@ -61,22 +58,25 @@ Writing prompts in natural language is great—until they become messy with mult
 - **Structured**: Break complex tasks into clear, sequential steps
 - **Maintainable**: Code is easier to version, review, and modify than long text prompts
 - **Debuggable**: Track execution history and see exactly what happened at each step
-- **Type-safe**: Use Zod schemas to enforce strict output formats
+- **Type-safe**: Use [Zod](https://zod.dev/) schemas to enforce strict output formats
 - **Reliable**: Get consistent, predictable results from your AI workflows
 
 ## Core Concepts
 
 ### Steps
-Steps are the fundamental building blocks of prai. Each step represents a single instruction to an AI model with a defined input prompt and expected output schema.
+Steps are the fundamental building blocks of prai. Each step represents a single instruction to an AI model with a defined input prompt and expected output schema using [Zod](https://zod.dev/). This ensures type safety and forces the AI to return data in the exact format you need.
+
+Learn more about the [Step Concept](../concepts/step.mdx)
 
 ### History
 History tracks the conversation flow between steps, allowing later steps to reference results from previous steps. This creates a coherent workflow where each step builds upon previous results.
 
+Learn more about the [History Concept](../concepts/history.mdx)
+
 ### Models
 Models represent AI providers (OpenAI, Groq, Gemini) and handle the actual communication with AI services. They abstract away provider-specific details.
 
-### Schemas
-Schemas define the expected structure of outputs using Zod. This ensures type safety and forces the AI to return data in the exact format you need.
+Learn more about the [Model Concept](../concepts/model.mdx)
 
 ## When to Use prai
 
@@ -87,12 +87,11 @@ We recommend **prai** for problems that are best solved with a structured proces
 - **Design Systems**: Generating themes, color schemes, or design specifications
 - **Decision Workflows**: Multi-step reasoning processes that require intermediate results
 
-
 ## Next Steps
 
-- [First Workflow](./first-workflow.md) - Build your first complete prai workflow
-- [Special Step Types](./special-step-types.md) - Learn about specialized functions for data processing
-- [Advanced Usage](./advanced-usage.md) - Learn about advanced features and patterns
-- [Best Practices](./best-practices.md) - Production guidelines and optimization tips
+- [First Workflow](./first-workflow.mdx) - Build your first complete prai workflow
+- [Special Step Types](./special-step-types.mdx) - Learn about specialized functions for data processing
+- [Advanced Usage](./advanced-usage.mdx) - Learn about advanced features and patterns
+- [Best Practices](./best-practices.mdx) - Production guidelines and optimization tips
 - [Core Concepts](../concepts/) - Deep dive into prai's architecture
 

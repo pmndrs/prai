@@ -1,12 +1,17 @@
 ---
 title: Advanced Usage
-description: advanced prai features including streaming responses, conditional workflows, model fallbacks, and testing strategies
+description: This guide covers advanced **prai** features and patterns for building advanced AI workflows.
 nav: 4
 ---
 
-# Advanced Usage
 
-This guide covers advanced **prai** features and patterns for building advanced AI workflows.
+
+<Keypoints title="What you'll learn">
+  <KeypointsItem>**Streaming responses** for real-time feedback</KeypointsItem>
+  <KeypointsItem>**Conditional workflows** that branch based on results</KeypointsItem>
+  <KeypointsItem>**Model fallback** mechanisms for reliability</KeypointsItem>
+  <KeypointsItem>**Testing strategies** with mock providers</KeypointsItem>
+</Keypoints>
 
 ## Streaming Responses
 
@@ -14,7 +19,7 @@ This guide covers advanced **prai** features and patterns for building advanced 
 
 ### Basic Streaming
 
-```typescript
+```typescript {4,13} showLineNumbers
 import { step } from 'prai'
 import { z } from 'zod'
 
@@ -44,7 +49,7 @@ console.log('Final result:', result)
 
 ### Custom Stream Processing
 
-```typescript
+```typescript {3,8} showLineNumbers
 // Transform stream data as it arrives
 const customStream = step(
   'Generate a list of programming concepts',
@@ -77,9 +82,9 @@ for await (const event of customStream) {
 
 ## Testing with Mock Provider
 
-For testing workflows, use the mock provider. See [Models - Mock Provider](../concepts/model.md#mock-provider) for complete documentation.
+For testing workflows, use the mock provider. See [Models - Mock Provider](../concepts/model.mdx#mock-provider) for complete documentation.
 
-```typescript
+```typescript {3,9} showLineNumbers
 import { mock } from 'prai'
 
 const mockModel = new Model({
@@ -97,12 +102,11 @@ const testResult = await step(
 console.log(testResult) // { message: "mock response" }
 ```
 
-
 ## Conditional Workflows
 
 Build workflows that branch based on previous results:
 
-```typescript
+```typescript {1,11,18,26} showLineNumbers
 const assessment = await step(
   'Assess the complexity of this task',
   z.object({
@@ -153,12 +157,11 @@ if (assessment.complexity === 'simple') {
 }
 ```
 
-
 ## Model Fallback
 
 Implement fallback mechanisms for reliability:
 
-```typescript
+```typescript {6,14} showLineNumbers
 async function robustStep<T>(
   prompt: string,
   schema: z.Schema<T>,
@@ -186,7 +189,7 @@ async function robustStep<T>(
 
 Choose models based on task characteristics:
 
-```typescript
+```typescript {4,10,16,23} showLineNumbers
 function selectModel(taskComplexity: 'simple' | 'moderate' | 'complex') {
   switch (taskComplexity) {
     case 'simple':
@@ -211,13 +214,11 @@ const model = selectModel('complex')
 const result = await step(complexPrompt, complexSchema, { model, history })
 ```
 
-
-
 ## Dynamic Schema Generation
 
 Generate schemas based on runtime data:
 
-```typescript
+```typescript {1,11,15} showLineNumbers
 function createProductSchema(categories: string[]) {
   return z.object({
     name: z.string(),

@@ -13,8 +13,9 @@ jobs:
       libname: 'prai'
       base_path: '/prai'
       icon: '🤖'
-      github: 'https://github.com/pmndrs/prai'
       home_redirect: '/getting-started/introduction'
+      github: 'https://github.com/pmndrs/prai'
+      discord: 'https://discord.gg/poimandres'
 
   deploy:
     needs: docs

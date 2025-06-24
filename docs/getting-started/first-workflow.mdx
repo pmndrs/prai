@@ -4,9 +4,14 @@ description: Build a complete prai workflow from scratch
 nav: 2
 ---
 
-# Your First prai Workflow
-
 In this tutorial, we'll build a complete workflow that generates a brand theme. This will teach you the fundamental concepts of prai through hands-on practice.
+
+<Keypoints title="What you'll build">
+  <KeypointsItem>A **brand theme generator** workflow</KeypointsItem>
+  <KeypointsItem>Multi-step AI processing with **history tracking**</KeypointsItem>
+  <KeypointsItem>**Type-safe schemas** with Zod validation</KeypointsItem>
+  <KeypointsItem>**CSS output generation** from AI results</KeypointsItem>
+</Keypoints>
 
 ## What We'll Build
 
@@ -18,9 +23,8 @@ We'll create a workflow that:
 
 ## Prerequisites
 
-Make sure you have:
-- Node.js installed
-- An API key from OpenAI, Groq, or Google Gemini
+> [!IMPORTANT]
+> Make sure you have Node.js installed and an API key from OpenAI, Groq, or Google Gemini before starting.
 
 ## Setup
 
@@ -55,7 +59,7 @@ Create a `tsconfig.json`:
 
 Create `src/index.ts`:
 
-```typescript
+```typescript {1,6,14} showLineNumbers
 import { History, Model, openai, step, consoleLogger } from 'prai'
 import { z } from 'zod'
 
@@ -88,7 +92,7 @@ main().catch(console.error)
 
 Add the first step to generate adjectives that describe your brand:
 
-```typescript
+```typescript {4} showLineNumbers
 // Add this inside the main() function
 
 // Step 1: Generate brand adjectives
@@ -105,7 +109,7 @@ console.log('Brand adjectives:', adjectives)
 
 Define a reusable color schema and create a basic theme:
 
-```typescript
+```typescript {4,13} showLineNumbers
 // Add this before the main() function
 
 // Reusable schema for HSL colors
@@ -135,11 +139,14 @@ const coreTheme = await step(
 console.log('Core theme:', coreTheme)
 ```
 
+> [!NOTE]
+> We use HSL color format because it's more intuitive for AI models to work with hue, saturation, and lightness values.
+
 ## Step 4: Expand to Full Theme
 
 Create a comprehensive design system theme:
 
-```typescript
+```typescript {4} showLineNumbers
 // Add this inside main() after the coreTheme step
 
 // Step 3: Expand to full design system
@@ -188,7 +195,7 @@ console.log('Full theme generated!', fullTheme)
 
 Add a utility function to convert the theme to CSS variables:
 
-```typescript
+```typescript {4,9} showLineNumbers
 // Add this before main()
 
 function hslToString(color: { hue: number; saturation: number; lightness: number }): string {
@@ -242,7 +249,7 @@ npx tsx src/index.ts
 Congratulations! You've built your first prai workflow. Here's what you've learned:
 
 1. **Steps**: How to create sequential AI instructions with `step()`
-2. **Schemas**: How to use Zod to enforce output structure
+2. **Schemas**: How to use [Zod](https://zod.dev/) to enforce output structure
 3. **History**: How to reference previous results with `history.reference()`
 4. **Models**: How to configure AI providers
 5. **Logging**: How to debug workflows with `consoleLogger()`
@@ -251,8 +258,8 @@ Congratulations! You've built your first prai workflow. Here's what you've learn
 
 - Try different AI providers (Groq, Gemini)
 - Experiment with more complex schemas
-- Learn about [Special Step Types](./special-step-types.md) for data processing
-- Learn about [Advanced Usage](./advanced-usage.md) patterns
-- Follow [Best Practices](./best-practices.md) for production workflows
+- Learn about [Special Step Types](./special-step-types.mdx) for data processing
+- Learn about [Advanced Usage](./advanced-usage.mdx) patterns
+- Follow [Best Practices](./best-practices.mdx) for production workflows
 - Explore the [Concepts](../concepts/) documentation
 

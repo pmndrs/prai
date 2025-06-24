@@ -4,8 +4,6 @@ description: What is a prai model?
 nav: 12
 ---
 
-# Models
-
 Models in prai represent AI providers and handle the communication with AI services. They abstract away provider-specific details while providing a consistent interface for all AI interactions.
 
 ## Core Concepts
@@ -14,7 +12,7 @@ A Model consists of a **Provider** (the AI service e.g. OpenAI, Groq, Gemini) an
 
 ## Basic Usage
 
-```typescript
+```typescript {3,9} showLineNumbers
 import { Model, openai } from 'prai'
 
 const model = new Model({
@@ -34,7 +32,7 @@ const result = await step(
 
 ### OpenAI
 
-```typescript
+```typescript {3} showLineNumbers
 import { openai } from 'prai'
 
 const openaiModel = new Model({
@@ -47,7 +45,7 @@ const openaiModel = new Model({
 
 ### Groq
 
-```typescript
+```typescript {3} showLineNumbers
 import { groq } from 'prai'
 
 const groqModel = new Model({
@@ -60,7 +58,7 @@ const groqModel = new Model({
 
 ### Google Gemini
 
-```typescript
+```typescript {3} showLineNumbers
 import { gemini } from 'prai'
 
 const geminiModel = new Model({
@@ -73,9 +71,12 @@ const geminiModel = new Model({
 
 ### Mock Provider
 
+> [!NOTE]
+> The mock provider returns predictable responses, making it perfect for testing workflows without using actual API calls.
+
 For testing and development:
 
-```typescript
+```typescript {3,9} showLineNumbers
 import { mock } from 'prai'
 
 const mockModel = new Model({

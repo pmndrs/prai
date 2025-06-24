@@ -1,32 +1,26 @@
 ---
 title: Special Step Types
-description: Learn about specialized prai step functions for data processing
+description: prai provides specialized step functions beyond the basic `step()` function for common data processing patterns like filtering data, combine results, and perform other operations in AI workflows.
 nav: 3
 ---
 
-# Special Step Types
-
-**prai** provides specialized step functions beyond the basic `step()` function for common data processing patterns. These functions make it easy to work with arrays, filter data, combine results, and perform other operations in AI workflows.
-
-## Overview
-
-Special step types handle common patterns that would otherwise require complex prompting:
-
-- **`mapStep`** - Process arrays of data with consistent prompts
-- **`filterStep`** - Filter arrays based on AI-powered criteria
-- **`combineStep`** - Merge multiple data sources intelligently
-- **`selectStep`** - Choose the best option from alternatives
-- **`allStep`** - Check if all items meet criteria
-- **`someStep`** - Check if any items meet criteria
-- **`joinStep`** - Join data with intelligent matching
-- **`separateStep`** - Split data into categories
-- **`listStep`** - Generate lists based on criteria
+<Keypoints title="Available step types">
+  <KeypointsItem>**`mapStep`** - Process arrays of data with consistent prompts</KeypointsItem>
+  <KeypointsItem>**`filterStep`** - Filter arrays based on AI-powered criteria</KeypointsItem>
+  <KeypointsItem>**`combineStep`** - Merge multiple data sources intelligently</KeypointsItem>
+  <KeypointsItem>**`selectStep`** - Choose the best option from alternatives</KeypointsItem>
+  <KeypointsItem>**`allStep`** - Check if all items meet criteria</KeypointsItem>
+  <KeypointsItem>**`someStep`** - Check if any items meet criteria</KeypointsItem>
+  <KeypointsItem>**`joinStep`** - Join data with intelligent matching</KeypointsItem>
+  <KeypointsItem>**`separateStep`** - Split data into categories</KeypointsItem>
+  <KeypointsItem>**`listStep`** - Generate lists based on criteria</KeypointsItem>
+</Keypoints>
 
 ## Map Step
 
 Process arrays of data with consistent prompts applied to each element.
 
-```typescript
+```typescript {9} showLineNumbers
 import { mapStep } from 'prai'
 
 const products = [
@@ -53,7 +47,7 @@ console.log(descriptions)
 
 ### Map Step Options
 
-```typescript
+```typescript showLineNumbers
 const results = await mapStep(
   data,
   (item) => `Process ${item.name}`,
@@ -70,7 +64,7 @@ const results = await mapStep(
 
 Filter arrays based on AI-powered criteria that would be difficult to express programmatically.
 
-```typescript
+```typescript {10} showLineNumbers
 import { filterStep } from 'prai'
 
 const articles = [
@@ -94,7 +88,7 @@ console.log(techArticles)
 
 ### Complex Filtering
 
-```typescript
+```typescript {7} showLineNumbers
 const candidates = [
   { name: 'Alice', experience: '5 years React, 3 years Node.js', education: 'CS Degree' },
   { name: 'Bob', experience: '2 years Python, ML research', education: 'PhD Physics' },
@@ -116,7 +110,7 @@ const suitable = await filterStep(
 
 Intelligently merge multiple data sources or combine related information.
 
-```typescript
+```typescript {22} showLineNumbers
 import { combineStep } from 'prai'
 
 const userFeedback = [
@@ -161,7 +155,7 @@ const report = await combineStep(
 
 Choose the best option from a set of alternatives based on given criteria.
 
-```typescript
+```typescript {25} showLineNumbers
 import { selectStep } from 'prai'
 
 const designOptions = [
@@ -197,7 +191,7 @@ console.log('Selected design:', selectedDesign)
 
 ### Select with Custom Scoring
 
-```typescript
+```typescript {1} showLineNumbers
 const bestCandidate = await selectStep(
   candidates,
   'Select the best candidate for a senior developer role, considering technical skills, leadership experience, and cultural fit',
@@ -213,7 +207,7 @@ const bestCandidate = await selectStep(
 
 Check if all items in an array meet specific criteria.
 
-```typescript
+```typescript {9} showLineNumbers
 import { allStep } from 'prai'
 
 const documents = [
@@ -240,7 +234,7 @@ console.log('All documents compliant:', allCompliant)
 
 Check if any items in an array meet specific criteria.
 
-```typescript
+```typescript {9} showLineNumbers
 import { someStep } from 'prai'
 
 const emails = [
@@ -265,7 +259,7 @@ if (hasUrgent) {
 
 Join or match data from different sources based on intelligent criteria.
 
-```typescript
+```typescript {13} showLineNumbers
 import { joinStep } from 'prai'
 
 const customers = [
@@ -303,7 +297,7 @@ const joined = await joinStep(
 
 Split data into different categories based on AI analysis.
 
-```typescript
+```typescript {10} showLineNumbers
 import { separateStep } from 'prai'
 
 const mixedContent = [
@@ -333,7 +327,7 @@ console.log(separated)
 
 Generate lists based on criteria or context.
 
-```typescript
+```typescript {10} showLineNumbers
 import { listStep } from 'prai'
 
 const projectContext = {

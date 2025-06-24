@@ -4,22 +4,18 @@ description: What is prai's history?
 nav: 13
 ---
 
-# History
-
 History is **prai**'s conversation tracking system that maintains context across multiple steps, enabling complex workflows where later steps can reference and build upon previous results.
 
-## Core Concepts
-
-History serves several key functions:
-
-1. **Context Preservation**: Maintains conversation flow between AI interactions
-2. **Reference System**: Allows steps to reference previous results
-3. **State Management**: Tracks workflow state and enables serialization
-4. **Event System**: Provides observability into workflow execution
+<Keypoints title="History Features">
+  <KeypointsItem>**Context preservation** maintains conversation flow between AI interactions</KeypointsItem>
+  <KeypointsItem>**Reference system** allows steps to reference previous results</KeypointsItem>
+  <KeypointsItem>**Subtasks** enable parallel and isolated workflows</KeypointsItem>
+  <KeypointsItem>**Event system** provides observability and debugging capabilities</KeypointsItem>
+</Keypoints>
 
 ## Basic Usage
 
-```typescript
+```typescript {7,14} showLineNumbers
 import { History } from 'prai'
 
 // Create a new history instance
@@ -45,7 +41,7 @@ The reference system allows steps to refer to previous results in a natural way:
 
 ### Basic References
 
-```typescript
+```typescript {2,11} showLineNumbers
 const userProfile = await step(
   'Create a user profile',
   z.object({
@@ -70,7 +66,7 @@ const recommendations = await step(
 
 Add custom data to history with descriptions:
 
-```typescript
+```typescript {3,10} showLineNumbers
 // Add external data to history
 const marketData = { revenue: 1000000, growth: 0.15, customers: 5000 }
 const dataRef = history.add(marketData, {
@@ -89,7 +85,7 @@ const analysis = await step(
 
 Reference data that's derived from other data:
 
-```typescript
+```typescript {1,4,11} showLineNumbers
 const salesData = await step('Get sales data', salesSchema, { model, history })
 
 const processedData = processSalesData(salesData)
@@ -107,11 +103,12 @@ const insights = await step(
 
 ## Multimodal Support
 
+
 History supports various data types including images and audio:
 
 ### Images
 
-```typescript
+```typescript {2,8} showLineNumbers
 // Add image data
 history.add(imageBuffer, {
   type: 'image',
@@ -131,7 +128,7 @@ const analysis = await step(
 
 ### Audio
 
-```typescript
+```typescript {2,8} showLineNumbers
 // Add audio data
 history.add(audioBuffer, {
   type: 'wav',
@@ -151,9 +148,12 @@ const transcription = await step(
 
 ## Subtasks
 
+> [!TIP]
+> Subtasks are perfect for parallel processing and creating isolated workflows that can later be combined in the main history.
+
 Subtasks allow you to create isolated workflows within a larger history:
 
-```typescript
+```typescript {4,20,31} showLineNumbers
 const history = new History()
 
 // Run parallel subtasks
@@ -201,7 +201,7 @@ const strategy = await step(
 
 History can be serialized and restored:
 
-```typescript
+```typescript {2,6} showLineNumbers
 // Save history state
 const historyState = history.getState()
 const serialized = JSON.stringify(historyState)
@@ -213,9 +213,12 @@ restoredHistory.setState(JSON.parse(serialized))
 
 ## Event System
 
+> [!TIP]
+> Use the event system for debugging, logging, and monitoring your prai workflows in production.
+
 History provides an event system for observability:
 
-```typescript
+```typescript {6,9} showLineNumbers
 import { consoleLogger } from 'prai'
 
 const history = new History()

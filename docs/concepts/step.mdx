@@ -4,8 +4,6 @@ description: What is a prai step?
 nav: 11
 ---
 
-# Steps
-
 Steps are the fundamental building blocks of prai workflows. Each step represents a single instruction to an AI model with a defined input prompt and expected output schema.
 
 ## Basic Step Structure
@@ -13,10 +11,10 @@ Steps are the fundamental building blocks of prai workflows. Each step represent
 Executing a step requires 3 things:
 
 1. **Prompt**: Natural language instruction for the AI
-2. **Schema**: Zod schema defining the expected output structure
+2. **Schema**: [Zod](https://zod.dev/) schema defining the expected output structure
 3. **Options**: Configuration including model, history, and other settings
 
-```typescript
+```typescript {4,10} showLineNumbers
 import { step } from 'prai'
 import { z } from 'zod'
 
@@ -40,7 +38,7 @@ const result = await step(
 - **`abortSignal`**: AbortSignal for canceling the step
 - **`systemPrompt`**: System-level instructions for the AI
 
-```typescript
+```typescript {7} showLineNumbers
 const result = await step(
   'Analyze this data and provide insights',
   analysisSchema,
@@ -55,9 +53,12 @@ const result = await step(
 
 ### Examples
 
+> [!TIP]
+> Providing examples helps guide the AI's output format and improves consistency across multiple runs.
+
 Provide examples to guide the AI's output:
 
-```typescript
+```typescript {9} showLineNumbers
 const result = await step(
   'Classify the sentiment of this text',
   z.object({
@@ -87,7 +88,7 @@ const result = await step(
 
 Enable streaming for real-time responses:
 
-```typescript
+```typescript {5,8} showLineNumbers
 // Basic streaming
 const stream = step(
   'Write a long article about AI',
@@ -104,9 +105,12 @@ const result = await stream.getValue()
 
 ## Schema Integration
 
-Steps use Zod schemas to ensure type safety and guide AI output:
+> [!TIP]
+> Use `.describe()` to more information about schema fields.
 
-```typescript
+Steps use [Zod](https://zod.dev/) schemas to ensure type safety and guide AI output:
+
+```typescript {10} showLineNumbers
 // Simple schema
 const userSchema = z.object({
   name: z.string(),
@@ -135,4 +139,4 @@ const project = await step(
 
 ## Specialized Steps
 
-**prai** provides specialized step functions for common patterns like processing arrays, filtering data, and combining results - see [Special Step Types](../getting-started/special-step-types.md).
+**prai** provides specialized step functions for common patterns like processing arrays, filtering data, and combining results - see [Special Step Types](../getting-started/special-step-types.mdx).
