@@ -1,11 +1,14 @@
 import OpenAI, { ClientOptions } from 'openai'
 import { Provider } from '../model.js'
 import { Message } from '../step.js'
-import { Schema, ZodObject, ZodUnion } from 'zod'
+import { Schema, ZodObject, ZodString, ZodUnion } from 'zod'
 import { extractResultProperty } from './utils.js'
 import { buildJsonSchema } from '../schema/json.js'
 
 function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
+  if (schema instanceof ZodString) {
+    return {}
+  }
   let responseSchema = buildJsonSchema(schema)
   if (wrapInObject) {
     responseSchema = {
@@ -34,10 +37,7 @@ export function openai(options: ClientOptions): Provider {
   const client = new OpenAI(options)
   return {
     async query(model, messages, schema, abortSignal) {
-      if (schema == null) {
-        return openaiQuery(model, client, messages, abortSignal)
-      }
-      if (!(schema instanceof ZodObject || schema instanceof ZodUnion)) {
+      if (!(schema instanceof ZodObject || schema instanceof ZodUnion || schema instanceof ZodString)) {
         const { result } = JSON.parse(
           await openaiQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, true)),
         )
@@ -46,10 +46,7 @@ export function openai(options: ClientOptions): Provider {
       return openaiQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, false))
     },
     async *streamingQuery(model, messages, schema, abortSignal) {
-      if (schema == null) {
-        return openaiStreamingQuery(model, client, messages, abortSignal)
-      }
-      if (!(schema instanceof ZodObject || schema instanceof ZodUnion)) {
+      if (!(schema instanceof ZodObject || schema instanceof ZodUnion || schema instanceof ZodString)) {
         return extractResultProperty(
           openaiStreamingQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, true)),
         )

@@ -1,4 +1,4 @@
-import { Schema } from 'zod'
+import { Schema, ZodString } from 'zod'
 import { isStepResponse, Message, MessageContent, wrapStepResponse } from './step.js'
 import { getSchemaOptional, setSchema } from './schema/store.js'
 import { buildSchemaType } from './schema/type.js'
@@ -16,6 +16,20 @@ export function buildStepRequestMessage(
     reason?: string
   }>,
 ): Message {
+  const schemaDescriptionLines: Array<string> = []
+  if (!(schema instanceof ZodString)) {
+    schemaDescriptionLines.push(
+      '', //newline
+      `Types:`,
+      buildSchemaType(schema, `Response`, { prefix: `Step${stepId + 1}`, schemaTypeDefinitions, usedSchemas }),
+    )
+  } else if (schema.description != null) {
+    schemaDescriptionLines.push(
+      '', //new line
+      `Response Format Description:`,
+      schema.description,
+    )
+  }
   return {
     role: 'user',
     content: [
@@ -23,6 +37,7 @@ export function buildStepRequestMessage(
         type: 'text',
         text: [
           `# Step${stepId + 1}`,
+          '', //new line
           `Instructions:`,
           prompt,
           ...(examples?.map(
@@ -31,8 +46,7 @@ export function buildStepRequestMessage(
                 example.reason != null ? `, since ${example.reason}` : ''
               }.`,
           ) ?? []),
-          `Types:`,
-          buildSchemaType(schema, `Response`, { prefix: `Step${stepId + 1}`, schemaTypeDefinitions, usedSchemas }),
+          ...schemaDescriptionLines,
         ].join('\n'),
       },
     ],

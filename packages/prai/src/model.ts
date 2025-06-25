@@ -1,4 +1,4 @@
-import { Schema } from 'zod'
+import { Schema, ZodString } from 'zod'
 import { Message } from './step.js'
 
 export type Provider = {
@@ -43,9 +43,12 @@ export class Model {
   ): { value: Promise<unknown>; stream?: AsyncIterable<string> } {
     if (!streamOption) {
       return {
-        value: this.options.provider
-          .query(this.options.name, messages, schema, abortSignal)
-          .then((response) => JSON.parse(response)),
+        value: this.options.provider.query(this.options.name, messages, schema, abortSignal).then((response) => {
+          if (!(schema instanceof ZodString) || (response.at(0) === '"' && response.at(-1) === '"')) {
+            return JSON.parse(response)
+          }
+          return response
+        }),
       }
     }
     const responseStream = this.options.provider.streamingQuery(this.options.name, messages, schema, abortSignal)
