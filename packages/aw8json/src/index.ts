@@ -12,10 +12,12 @@ export function isAsyncIterable(obj: unknown): obj is AsyncIterable<unknown, unk
 export async function* stringify(value: any): AsyncIterable<string> {
   const waitingFor: Array<AsyncIterable<unknown> | Promise<unknown>> = []
   const uuids: Array<string> = []
+  let promiseCounter = 0
+  let asyncIteratorCounter = 0
   yield JSON.stringify(value, (_, value) => {
     if (isAsyncIterable(value) || value instanceof Promise) {
       waitingFor.push(value)
-      const uuid = `${value instanceof Promise ? '$p' : '$ai'}-${crypto.randomUUID()}`
+      const uuid = value instanceof Promise ? `$p-${++promiseCounter}` : `$ai-${++asyncIteratorCounter}`
       uuids.push(uuid)
       return uuid
     }
@@ -108,7 +110,7 @@ async function processLines<T>(
     const json = seperatorIndex === -1 ? null : line.slice(seperatorIndex + 1)
     const write = writeMap.get(uuid)
     if (write == null) {
-      throw new Error(`unknown async iterable "${uuid}"`)
+      throw new Error(`unknown promise or async iterable "${uuid}"`)
     }
     write(json == null ? StopSymbol : JSON.parse(json))
   }
