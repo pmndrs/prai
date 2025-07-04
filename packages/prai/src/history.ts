@@ -229,7 +229,7 @@ export class History {
   /**
    * @deprecated used internally
    */
-  async addStepResponse(stepId: number, content: any, cost: number | undefined, schema: Schema): Promise<any> {
+  addStepResponse(stepId: number, content: any, cost: number | undefined, schema: Schema) {
     if (this.currentlyExecutingStepId != stepId) {
       throw new Error(
         `Step-${stepId + 1} is not currently executing. Current step is ${this.currentlyExecutingStepId == null ? 'none' : this.currentlyExecutingStepId + 1}`,
@@ -247,7 +247,6 @@ export class History {
     })
     this.dispatchEvent('step-response', { historyId: this.id, message, type: 'step-response' })
     this.cost = cost == null || this.cost == null ? undefined : this.cost + cost
-    return content
   }
 
   private addSubtaskResponse(value: unknown, goal: string) {

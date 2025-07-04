@@ -70,9 +70,8 @@ describe('History', () => {
       const stepId = history.addStepRequest('test prompt', schema)
       const response = 'test response'
 
-      const result = await history.addStepResponse(stepId, Promise.resolve(response), schema)
+      history.addStepResponse(stepId, response, undefined, schema)
 
-      expect(result).toBe(response)
       expect(history['messages']).toHaveLength(2)
 
       const responseMessage = history['messages'][1]
@@ -150,29 +149,12 @@ describe('History', () => {
 
       const schema = z.string()
       const stepId = history.addStepRequest('test prompt', schema)
-      await history.addStepResponse(stepId, Promise.resolve('response'), schema)
+      history.addStepResponse(stepId, 'response', undefined, schema)
 
       expect(listener).toHaveBeenCalledWith({
         type: 'step-response',
         historyId: history.id,
         message: expect.any(Object),
-      })
-    })
-
-    it('should dispatch step-error event on promise rejection', async () => {
-      const listener = vi.fn()
-      history.addEventListener('step-error', listener)
-
-      const schema = z.string()
-      const stepId = history.addStepRequest('test prompt', schema)
-      const error = new Error('Test error')
-
-      await expect(history.addStepResponse(stepId, Promise.reject(error), schema)).rejects.toThrow('Test error')
-
-      expect(listener).toHaveBeenCalledWith({
-        type: 'step-error',
-        historyId: history.id,
-        error: 'Test error',
       })
     })
 
@@ -213,7 +195,7 @@ describe('History', () => {
       const stepId = history.addStepRequest('test', schema)
       expect(listener).toHaveBeenCalledTimes(1)
 
-      await history.addStepResponse(stepId, Promise.resolve('response'), schema)
+      history.addStepResponse(stepId, 'response', undefined, schema)
       controller.abort()
       history.addStepRequest('test2', schema)
       expect(listener).toHaveBeenCalledTimes(1) // Should not be called again
@@ -245,7 +227,7 @@ describe('History', () => {
     it('should allow starting new step after previous one completes', async () => {
       const schema = z.string()
       const stepId1 = history.addStepRequest('first step', schema)
-      await history.addStepResponse(stepId1, Promise.resolve('response1'), schema)
+      history.addStepResponse(stepId1, 'response1', undefined, schema)
 
       const stepId2 = history.addStepRequest('second step', schema)
       expect(stepId2).toBe(1)
@@ -255,7 +237,7 @@ describe('History', () => {
       const schema = z.string()
       const stepId = history.addStepRequest('test step', schema)
 
-      await expect(history.addStepResponse(stepId + 1, Promise.resolve('response'), schema)).rejects.toThrow(
+      expect(() => history.addStepResponse(stepId + 1, 'response', undefined, schema)).toThrow(
         'Step-2 is not currently executing. Current step is 1',
       )
     })
@@ -309,7 +291,7 @@ describe('History', () => {
     it('should clone history correctly', async () => {
       const schema = z.string()
       const stepId = history.addStepRequest('test', schema)
-      await history.addStepResponse(stepId, Promise.resolve('response'), schema)
+      history.addStepResponse(stepId, 'response', undefined, schema)
       history.add({ test: 'data' })
 
       const cloned = history.clone()
@@ -323,7 +305,7 @@ describe('History', () => {
       const source = new History()
       const schema = z.string()
       const stepId = source.addStepRequest('test', schema)
-      await source.addStepResponse(stepId, Promise.resolve('response'), schema)
+      source.addStepResponse(stepId, 'response', undefined, schema)
 
       history.copy(source)
 
@@ -439,12 +421,12 @@ describe('History', () => {
       // First step with user schema
       const stepId1 = history.addStepRequest('Get user info', userSchema)
       const response1 = { name: 'John', age: 30 }
-      await history.addStepResponse(stepId1, Promise.resolve(response1), userSchema)
+      history.addStepResponse(stepId1, response1, undefined, userSchema)
 
       // Second step with same user schema
       const stepId2 = history.addStepRequest('Validate user info', userSchema)
       const response2 = { name: 'Jane', age: 25 }
-      await history.addStepResponse(stepId2, Promise.resolve(response2), userSchema)
+      history.addStepResponse(stepId2, response2, undefined, userSchema)
 
       expect(history['messages']).toHaveLength(4)
 
@@ -472,13 +454,14 @@ describe('History', () => {
       })
 
       const stepId = history.addStepRequest('Process user with addresses', userSchema)
-      await history.addStepResponse(
+      history.addStepResponse(
         stepId,
-        Promise.resolve({
+        {
           name: 'John',
           address: { street: '123 Main St', city: 'NYC' },
           addresses: [{ street: '456 Oak Ave', city: 'LA' }],
-        }),
+        },
+        undefined,
         userSchema,
       )
 
@@ -500,7 +483,7 @@ describe('History', () => {
 
       // Add first step
       const stepId1 = history.addStepRequest('First step', schema)
-      await history.addStepResponse(stepId1, Promise.resolve({ id: 1, name: 'test' }), schema)
+      history.addStepResponse(stepId1, { id: 1, name: 'test' }, undefined, schema)
 
       // Clone history
       const cloned = history.clone()
@@ -534,7 +517,7 @@ describe('History', () => {
       // Add step
       const schema = z.string()
       const stepId = history.addStepRequest('Test step', schema)
-      await history.addStepResponse(stepId, Promise.resolve('response'), schema)
+      history.addStepResponse(stepId, 'response', undefined, schema)
 
       expect(history['messages']).toHaveLength(5)
 
@@ -594,7 +577,7 @@ describe('History', () => {
       // First step
       const schema1 = z.object({ processed: z.boolean() })
       const stepId1 = history.addStepRequest('Process user', schema1)
-      await history.addStepResponse(stepId1, Promise.resolve({ processed: true }), schema1)
+      history.addStepResponse(stepId1, { processed: true }, undefined, schema1)
 
       // Add more data
       const configData = { setting: 'enabled' }
@@ -603,7 +586,7 @@ describe('History', () => {
       // Second step
       const schema2 = z.array(z.string())
       const stepId2 = history.addStepRequest('Generate list', schema2)
-      await history.addStepResponse(stepId2, Promise.resolve(['item1', 'item2']), schema2)
+      history.addStepResponse(stepId2, ['item1', 'item2'], undefined, schema2)
 
       // Subtask
       const subtaskResult = history.subtask('subtask goal', () => 'subtask result')
@@ -643,7 +626,7 @@ describe('History', () => {
       history.add({ data: 'test' })
       const schema = z.object({ result: z.string() })
       const stepId = history.addStepRequest('Test', schema)
-      await history.addStepResponse(stepId, Promise.resolve({ result: 'success' }), schema)
+      history.addStepResponse(stepId, { result: 'success' }, undefined, schema)
 
       // Clone and verify structure
       const cloned = history.clone()

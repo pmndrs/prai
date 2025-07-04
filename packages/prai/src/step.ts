@@ -26,7 +26,7 @@ export type Message =
 
 type StepOptions = {
   history?: History
-  model?: Model
+  model?: Model<unknown>
   examples?: Array<{
     input: string
     output: string

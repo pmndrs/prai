@@ -3,17 +3,17 @@ import { extractResultProperty } from '../src/provider/utils.js'
 
 describe('extractResultProperty', () => {
   // Helper function to create an async iterable from chunks
-  async function* createAsyncIterable(chunks: string[]): AsyncIterable<string> {
-    for (const chunk of chunks) {
-      yield chunk
+  async function* createAsyncIterable(chunks: string[]): AsyncIterable<{ content: string }> {
+    for (const content of chunks) {
+      yield { content }
     }
   }
 
   // Helper function to collect results from async iterable
-  async function collectResults(asyncIterable: AsyncIterable<string>): Promise<string> {
+  async function collectResults(asyncIterable: AsyncIterable<{ content: string }>): Promise<string> {
     let result = ''
-    for await (const chunk of asyncIterable) {
-      result += chunk
+    for await (const { content } of asyncIterable) {
+      result += content
     }
     return result
   }
