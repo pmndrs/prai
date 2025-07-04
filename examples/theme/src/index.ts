@@ -1,4 +1,4 @@
-import { consoleLogger, gemini, groq, openai, History, Model, step } from 'prai'
+import { consoleLogger, gemini, History, Model, step, buildSimplePrice, openai, groq } from 'prai'
 import { z } from 'zod'
 
 // 1. Inputs for our theme generation process
@@ -16,12 +16,16 @@ const colorScheme = z
 
 // 3. Create a model based on an AI provider (openai, groq, more support comming soon)
 const model = new Model({
-  name: 'gemini-2.5-flash-preview-05-20',
-  provider: gemini({ apiKey: process.env.API_KEY }),
+  /*name: 'gemini-2.5-flash',
+  provider: gemini({ apiKey: process.env.GEMINI_API_KEY }),
+  price: buildSimplePrice(0.3, 2.5),
+  thinkingConfig: { thinkingBudget: 0, includeThoughts: false },*/
   /*name: 'gpt-4.1-mini',
-  provider: openai({ apiKey: process.env.API_KEY }),*/
-  /*name: 'meta-llama/llama-4-scout-17b-16e-instruct',
-  provider: groq({ apiKey: process.env.API_KEY }),*/
+  provider: openai({ apiKey: process.env.OPENAI_API_KEY }),
+  price: buildSimplePrice(0.4, 1.6),*/
+  name: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  provider: groq({ apiKey: process.env.GROQ_API_KEY }),
+  price: buildSimplePrice(0.11, 0.34),
 })
 
 // 4. create a chat history
@@ -138,5 +142,7 @@ function formatThemeAsCss(theme: typeof result): string {
 
 // Log the theme in CSS format
 console.log(formatThemeAsCss(result))
+
+console.log(`Overall Costs: ${history.getCost()}$`)
 
 //import into https://tweakcn.com/editor/theme to visualize

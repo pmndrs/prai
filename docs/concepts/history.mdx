@@ -247,3 +247,59 @@ history.addEventListener('subtask-start', (event) => {
   console.log('Subtask started:', event.subtaskHistoryId)
 })
 ```
+
+## Cost Tracking
+
+> [!TIP]
+> Cost tracking helps you monitor and optimize AI usage costs across your workflows.
+
+History automatically tracks the cost of all AI model calls and provides methods to retrieve total costs:
+
+### Basic Cost Tracking
+
+```typescript {12} showLineNumbers
+import { openai, buildSimplePrice } from 'prai'
+
+const model = new Model({
+  name: 'gpt-4o-mini',
+  provider: openai({ apiKey: process.env.OPENAI_API_KEY }),
+  price: buildSimplePrice(0.4, 1.6) // $0.4 per 1M input tokens, $1.6 per 1M output tokens
+})
+
+const history = new History()
+
+// Run some steps...
+const analysis = await step('Analyze this data', analysisSchema, { model, history })
+const summary = await step('Summarize the analysis', summarySchema, { model, history })
+
+// Get total cost for all steps
+const totalCost = history.getCost()
+console.log(`Total cost: $${totalCost}`)
+```
+
+### Cost with Subtasks
+
+Costs from subtasks are automatically included in the main history:
+
+```typescript {15,20} showLineNumbers
+const history = new History()
+
+// Run parallel subtasks
+const [analysis1, analysis2] = await Promise.all([
+  history.subtask('Analysis 1', async (subHistory) => {
+    return await step('Analyze dataset 1', schema, { model, history: subHistory })
+  }),
+  
+  history.subtask('Analysis 2', async (subHistory) => {
+    return await step('Analyze dataset 2', schema, { model, history: subHistory })
+  })
+])
+
+// Main history cost includes subtask costs
+const totalCost = history.getCost()
+console.log(`Total cost including subtasks: $${totalCost}`)
+
+// Final step cost is also included
+const final = await step('Combine analyses', finalSchema, { model, history })
+console.log(`Final total cost: $${history.getCost()}`)
+```

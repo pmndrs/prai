@@ -81,38 +81,19 @@ export function step<T, S extends StreamTransform>(
   if (systemPrompt != null) {
     messages = [{ role: 'system', content: [{ type: 'text', text: systemPrompt }] }, ...messages]
   }
-  let { value, stream } = model.query(messages, schema, streamOption != false, abortSignal)
-  let result: Promise<T> | StepResponseStream<T, S> = value as Promise<T>
-  if (stream != null) {
-    result = Object.assign(stream as AsyncIterable<GetStreamOutput<S>>, {
-      getValue() {
-        return value as Promise<T>
-      },
-    })
+  let { promise, stream } = model.query(messages, schema, streamOption != false, abortSignal)
+  const content = promise.then(({ content, cost }) => {
+    if (stepId != null && history != null) {
+      history.addStepResponse(stepId, content, cost, schema)
+    }
+    return content
+  })
+  if (stream == null) {
+    return content
   }
-  if (stepId != null && history != null) {
-    result = wrapStepResponse(result, (value) => history.addStepResponse(stepId, value, schema))
-  }
-  return result
-}
-
-export function isStepResponse(val: unknown): val is Promise<any> | StepResponseStream<any, any> {
-  if (val instanceof Promise) {
-    return true
-  }
-  if (!isAsyncIterable(val)) {
-    return false
-  }
-  return 'getValue' in val
-}
-
-export function wrapStepResponse<T, S extends StreamTransform>(
-  input: Promise<T> | StepResponseStream<T, S>,
-  wrap: <T>(value: Promise<T>) => Promise<T>,
-): Promise<T> | StepResponseStream<T, S> {
-  if (!isAsyncIterable(input)) {
-    return wrap(input)
-  }
-  input.getValue = () => wrap(input.getValue())
-  return input
+  return Object.assign(stream as AsyncIterable<GetStreamOutput<S>>, {
+    getValue() {
+      return content as Promise<T>
+    },
+  })
 }

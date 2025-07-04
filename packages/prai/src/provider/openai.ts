@@ -1,9 +1,9 @@
 import OpenAI, { ClientOptions } from 'openai'
 import { Provider } from '../model.js'
-import { Message } from '../step.js'
 import { Schema, ZodObject, ZodString, ZodUnion } from 'zod'
-import { extractResultProperty } from './utils.js'
+import { extractResultProperty, queryOpenai, streamingQueryOpenai } from './utils.js'
 import { buildJsonSchema } from '../schema/json.js'
+import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions.mjs'
 
 function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
   if (schema instanceof ZodString) {
@@ -33,68 +33,60 @@ function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
   }
 }
 
-export function openai(options: ClientOptions): Provider {
+export function openai(
+  options: ClientOptions,
+): Provider<
+  Omit<ChatCompletionCreateParamsBase, 'model' | 'messages' | 'stream_options' | 'stream' | 'response_format'>
+> {
   const client = new OpenAI(options)
   return {
-    async query(model, messages, schema, abortSignal) {
+    async query(modelName, modelPrice, modelOptions, messages, schema, abortSignal) {
       if (!(schema instanceof ZodObject || schema instanceof ZodUnion || schema instanceof ZodString)) {
-        const { result } = JSON.parse(
-          await openaiQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, true)),
+        const { content, cost } = await queryOpenai(
+          modelName,
+          modelPrice,
+          modelOptions,
+          client,
+          messages,
+          abortSignal,
+          buildAdditionalParams(schema, true),
         )
-        return JSON.stringify(result)
+        const { result } = JSON.parse(content)
+        return { content: JSON.stringify(result), cost }
       }
-      return openaiQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, false))
+      return queryOpenai(
+        modelName,
+        modelPrice,
+        modelOptions,
+        client,
+        messages,
+        abortSignal,
+        buildAdditionalParams(schema, false),
+      )
     },
-    async *streamingQuery(model, messages, schema, abortSignal) {
+    async *streamingQuery(modelName, modelPrice, modelOptions, messages, schema, abortSignal) {
       if (!(schema instanceof ZodObject || schema instanceof ZodUnion || schema instanceof ZodString)) {
         return extractResultProperty(
-          openaiStreamingQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, true)),
+          streamingQueryOpenai(
+            modelName,
+            modelPrice,
+            modelOptions,
+            client,
+            messages,
+            abortSignal,
+            buildAdditionalParams(schema, true),
+          ),
         )
       }
-      return openaiStreamingQuery(model, client, messages, abortSignal, buildAdditionalParams(schema, false))
+      return streamingQueryOpenai(
+        modelName,
+        modelPrice,
+        modelOptions,
+        client,
+        messages,
+        abortSignal,
+        buildAdditionalParams(schema, false),
+      )
     },
   }
-}
-
-export async function* openaiStreamingQuery(
-  model: string,
-  client: OpenAI,
-  messages: Array<Message>,
-  abortSignal: AbortSignal | undefined,
-  additionalParams?: {},
-): AsyncIterable<string> {
-  const result = await client.chat.completions.create(
-    {
-      messages,
-      model,
-      stream: true,
-      ...additionalParams,
-    },
-    {
-      signal: abortSignal,
-    },
-  )
-  for await (const chunk of result) {
-    yield chunk.choices[0].delta.content ?? ''
-  }
-}
-
-export async function openaiQuery(
-  model: string,
-  client: OpenAI,
-  messages: Array<Message>,
-  abortSignal: AbortSignal | undefined,
-  options?: {},
-): Promise<string> {
-  const result = await client.chat.completions.create(
-    {
-      messages,
-      model,
-      ...options,
-    },
-    {
-      signal: abortSignal,
-    },
-  )
-  return result.choices[0].message.content ?? ''
 }

@@ -4,6 +4,7 @@ import { Message } from '../step.js'
 import { buildJsonSchema } from '../schema/json.js'
 import { Schema, ZodObject, ZodString, ZodUnion } from 'zod'
 import { extractResultProperty, streamingQueryOpenai, queryOpenai } from './utils.js'
+import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions.mjs'
 
 function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
   if (schema instanceof ZodString) {
@@ -33,27 +34,62 @@ function buildAdditionalParams(schema: Schema, wrapInObject: boolean) {
   }
 }
 
-export function groq(options: ClientOptions): Provider {
+export function groq(
+  options: ClientOptions,
+): Provider<
+  Omit<ChatCompletionCreateParamsBase, 'model' | 'messages' | 'stream_options' | 'stream' | 'response_format'>
+> {
   const client = new OpenAI({ baseURL: 'https://api.groq.com/openai/v1', ...options })
   return {
-    async query(model, messages, schema, abortSignal) {
+    async query(modelName, modelPrice, modelOptions, messages, schema, abortSignal) {
       const transformedMessages = transformMessages(messages)
       if (!(schema instanceof ZodObject || schema instanceof ZodUnion || schema instanceof ZodString)) {
-        const { result } = JSON.parse(
-          await queryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, true)),
+        const { content, cost } = await queryOpenai(
+          modelName,
+          modelPrice,
+          modelOptions,
+          client,
+          transformedMessages,
+          abortSignal,
+          buildAdditionalParams(schema, true),
         )
-        return JSON.stringify(result)
+        const { result } = JSON.parse(content)
+        return { content: JSON.stringify(result), cost }
       }
-      return queryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, false))
+      return queryOpenai(
+        modelName,
+        modelPrice,
+        modelOptions,
+        client,
+        transformedMessages,
+        abortSignal,
+        buildAdditionalParams(schema, false),
+      )
     },
-    async *streamingQuery(model, messages, schema, abortSignal) {
+    async *streamingQuery(modelName, modelPrice, modelOptions, messages, schema, abortSignal) {
       const transformedMessages = transformMessages(messages)
       if (!(schema instanceof ZodObject || schema instanceof ZodUnion || schema instanceof ZodString)) {
         return extractResultProperty(
-          streamingQueryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, true)),
+          streamingQueryOpenai(
+            modelName,
+            modelPrice,
+            modelOptions,
+            client,
+            transformedMessages,
+            abortSignal,
+            buildAdditionalParams(schema, true),
+          ),
         )
       }
-      return streamingQueryOpenai(model, client, transformedMessages, abortSignal, buildAdditionalParams(schema, false))
+      return streamingQueryOpenai(
+        modelName,
+        modelPrice,
+        modelOptions,
+        client,
+        transformedMessages,
+        abortSignal,
+        buildAdditionalParams(schema, false),
+      )
     },
   }
 }

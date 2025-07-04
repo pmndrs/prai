@@ -1,47 +1,66 @@
 import OpenAI from 'openai'
 import { Message } from '../step.js'
+import { Price } from '../model.js'
+import {
+  ChatCompletionCreateParamsBase,
+  ChatCompletionCreateParamsNonStreaming,
+} from 'openai/resources/chat/completions.mjs'
 
 export async function* streamingQueryOpenai(
-  model: string,
+  modelName: string,
+  modelPrice: Price | undefined,
+  modelOptions: Omit<ChatCompletionCreateParamsBase, 'model' | 'messages' | 'stream_options' | 'stream'>,
   client: OpenAI,
   messages: Array<Message>,
   abortSignal: AbortSignal | undefined,
   additionalParams?: {},
-): AsyncIterable<string> {
+): AsyncIterable<{ content: string; cost?: number }> {
   const result = await client.chat.completions.create(
     {
       messages,
-      model,
+      model: modelName,
       stream: true,
+      stream_options: { include_usage: true },
       ...additionalParams,
+      ...modelOptions,
     },
     {
       signal: abortSignal,
     },
   )
   for await (const chunk of result) {
-    yield chunk.choices[0].delta.content ?? ''
+    yield {
+      content: chunk.choices[0].delta.content ?? '',
+      cost: chunk.usage == null ? undefined : modelPrice?.(chunk.usage.prompt_tokens, 0, chunk.usage.completion_tokens),
+    }
   }
 }
 
 export async function queryOpenai(
-  model: string,
+  modelName: string,
+  modelPrice: Price | undefined,
+  modelOptions: Omit<ChatCompletionCreateParamsBase, 'model' | 'messages' | 'stream_options' | 'stream'>,
   client: OpenAI,
   messages: Array<Message>,
   abortSignal: AbortSignal | undefined,
   options?: {},
-): Promise<string> {
+): Promise<{ content: string; cost?: number }> {
   const result = await client.chat.completions.create(
     {
       messages,
-      model,
+      model: modelName,
       ...options,
+      ...modelOptions,
     },
     {
       signal: abortSignal,
     },
   )
-  return result.choices[0].message.content ?? ''
+  return {
+    content: result.choices[0].message.content ?? '',
+    cost:
+      result.usage == null ? undefined : modelPrice?.(result.usage.prompt_tokens, 0, result.usage.completion_tokens),
+  }
 }
 
 export const booleanGrammar = `"true" | "false"`
@@ -55,7 +74,7 @@ interface StreamState {
   finished: boolean
 }
 
-function* processJsonChunk(chunk: string, state: StreamState): Generator<string, void, unknown> {
+function processJsonChunk(chunk: string, state: StreamState): string {
   let processedChunk = ''
 
   for (let i = 0; i < chunk.length; i++) {
@@ -98,14 +117,12 @@ function* processJsonChunk(chunk: string, state: StreamState): Generator<string,
     processedChunk += char
   }
 
-  // Yield the processed chunk
-  if (processedChunk.length > 0) {
-    yield processedChunk
-  }
+  return processedChunk
 }
 
-export async function* extractResultProperty(input: AsyncIterable<string>) {
-  let buffer = ''
+export async function* extractResultProperty(input: AsyncIterable<{ content: string; cost?: number }>) {
+  let contentBuffer = ''
+  let costBuffer: number | undefined
 
   // Initialize state for JSON processing
   const state: StreamState = {
@@ -118,21 +135,26 @@ export async function* extractResultProperty(input: AsyncIterable<string>) {
   let started = false
 
   // Phase 1: Wait for {"result": pattern (with possible whitespace)
-  for await (let chunk of input) {
+  for await (let { content, cost } of input) {
     if (!started) {
-      buffer += chunk
+      contentBuffer += content
+      if (cost != null) {
+        costBuffer ??= 0
+        costBuffer += cost ?? 0
+      }
 
       // Look for {"result": allowing for whitespace between tokens
       const pattern = /\{\s*"result"\s*:\s*/
-      const match = buffer.match(pattern)
+      const match = contentBuffer.match(pattern)
 
       if (!match) {
         continue
       }
       started = true
-      chunk = buffer.substring(match.index! + match[0].length)
+      content = contentBuffer.substring(match.index! + match[0].length)
+      cost = costBuffer
     }
-    yield* processJsonChunk(chunk, state)
+    yield { content: processJsonChunk(content, state), cost }
     if (state.finished) {
       return
     }

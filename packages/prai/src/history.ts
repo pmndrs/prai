@@ -1,5 +1,5 @@
 import { Schema, ZodString } from 'zod'
-import { isStepResponse, Message, MessageContent, wrapStepResponse } from './step.js'
+import { Message, MessageContent, StepResponseStream } from './step.js'
 import { getSchemaOptional, setSchema } from './schema/store.js'
 import { buildSchemaType } from './schema/type.js'
 import { isAsyncIterable } from 'aw8json'
@@ -136,6 +136,14 @@ export class History {
   private count = { subtasks: 0, datas: 0, images: 0, audios: 0, steps: 0 }
   private schemaTypeDefinitions = new Map<Schema, string>()
   private usedSchemas = new Set<Schema>()
+  private cost: number | undefined = 0
+
+  getCost() {
+    if (this.currentlyExecutingStepId != null) {
+      throw new Error('unable to compute the costs while still executing a step')
+    }
+    return this.cost
+  }
 
   //TODO: modify the state so its fully serializeable and deserializable with json
   getState() {
@@ -213,33 +221,33 @@ export class History {
     return stepId
   }
 
+  onStepError(error: any) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    this.dispatchEvent('step-error', { type: 'step-error', historyId: this.id, error: errorMessage })
+  }
+
   /**
    * @deprecated used internally
    */
-  async addStepResponse(stepId: number, promise: Promise<any>, schema: Schema): Promise<any> {
-    //order is important! "await promise" must be executed first
-    const value = await promise.catch((error) => {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      this.dispatchEvent('step-error', { type: 'step-error', historyId: this.id, error: errorMessage })
-      return Promise.reject(error)
-    })
+  async addStepResponse(stepId: number, content: any, cost: number | undefined, schema: Schema): Promise<any> {
     if (this.currentlyExecutingStepId != stepId) {
       throw new Error(
         `Step-${stepId + 1} is not currently executing. Current step is ${this.currentlyExecutingStepId == null ? 'none' : this.currentlyExecutingStepId + 1}`,
       )
     }
-    setSchema(value, schema)
+    setSchema(content, schema)
     this.currentlyExecutingStepId = undefined
-    const message: Message = { role: 'assistant', content: [{ type: 'text', text: JSON.stringify(value) }] }
+    const message: Message = { role: 'assistant', content: [{ type: 'text', text: JSON.stringify(content) }] }
     this.messages.push(message)
-    this.referenceMap.set(value, () => {
+    this.referenceMap.set(content, () => {
       if (this.count.steps === stepId + 1) {
         return `response of the previous step`
       }
       return `response of Step-${stepId + 1}`
     })
     this.dispatchEvent('step-response', { historyId: this.id, message, type: 'step-response' })
-    return value
+    this.cost = cost == null || this.cost == null ? undefined : this.cost + cost
+    return content
   }
 
   private addSubtaskResponse(value: unknown, goal: string) {
@@ -375,16 +383,24 @@ export class History {
       subtaskHistoryId: subtaskHistory.id,
     })
     const result = fn(subtaskHistory)
-    if (!isStepResponse(result)) {
+    if (!(result instanceof Promise) && !isAsyncIterable(result)) {
       this.addSubtaskResponse(result, goal)
       return result
     }
-    return wrapStepResponse(result, async (promise) => {
-      const value = await promise
-      //order is important! "await promise" must be executed first
-      this.addSubtaskResponse(value, goal)
-      return value
-    }) as T
+    const wrap = async (content: any) => {
+      if (this.cost != null) {
+        const subtaskCost = subtaskHistory.getCost()
+        this.cost = subtaskCost == null ? undefined : this.cost + subtaskCost
+      }
+      this.addSubtaskResponse(content, goal)
+      return content
+    }
+    if (!isAsyncIterable(result)) {
+      return result.then(wrap) as T
+    }
+    const stream = result as unknown as StepResponseStream<T, any>
+    stream.getValue = () => stream.getValue().then(wrap) as Promise<T>
+    return result
   }
 }
 
