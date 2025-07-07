@@ -26,11 +26,6 @@ export type RedisLoggerOptions = {
 export async function redisLogger(history: History, options: RedisLoggerOptions): Promise<void> {
   const { streamName, streamTTL, client, abort: abortSignal } = options
 
-  // Create stream and set TTL if specified
-  if (streamTTL) {
-    await client.expire(streamName, streamTTL)
-  }
-
   // Helper to safely serialize messages
   const serializeMessageContent = (content: Message['content']): string => {
     try {
@@ -40,6 +35,8 @@ export async function redisLogger(history: History, options: RedisLoggerOptions)
     }
   }
 
+  let firstEntry = true
+
   // Common function to add entry to Redis stream
   const addStreamEntry = async (eventType: string, historyId: string, data: Record<string, string>) => {
     try {
@@ -48,6 +45,10 @@ export async function redisLogger(history: History, options: RedisLoggerOptions)
         historyId,
         ...data,
       })
+      if (firstEntry && streamTTL) {
+        await client.expire(streamName, streamTTL)
+      }
+      firstEntry = false
     } catch (error) {
       console.error(`Failed to log to Redis stream: ${error}`)
     }
