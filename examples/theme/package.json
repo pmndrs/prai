@@ -1,10 +1,12 @@
 {
-    "type": "module",
-    "dependencies": {
-        "@dotenvx/dotenvx": "^1.44.1",
-        "prai": "workspace:^"
-    },
-    "scripts": {
-        "dev": "dotenvx run -f .env -- node --loader ts-node/esm --enable-source-maps ./src/index.ts"
-    }
+  "type": "module",
+  "dependencies": {
+    "@dotenvx/dotenvx": "^1.44.1",
+    "prai": "workspace:^",
+    "prai-redis": "workspace:^",
+    "redis": "^5.5.6"
+  },
+  "scripts": {
+    "dev": "dotenvx run -f .env -- node --loader ts-node/esm --enable-source-maps ./src/index.ts"
+  }
 }

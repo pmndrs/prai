@@ -211,21 +211,11 @@ const restoredHistory = new History()
 restoredHistory.setState(JSON.parse(serialized))
 ```
 
-## Event System
+## Logging
 
-> [!TIP]
-> Use the event system for debugging, logging, and monitoring your prai workflows in production.
-
-History provides an event system for observability:
+History provides an event system for observability.
 
 ```typescript showLineNumbers
-import { consoleLogger } from 'prai'
-
-const history = new History()
-
-// Built-in console logger
-consoleLogger(history)
-
 // Custom event handling
 history.addEventListener('step-request', (event) => {
   console.log('Step started:', event.historyId)
@@ -246,6 +236,36 @@ history.addEventListener('data-reference-added', (event) => {
 history.addEventListener('subtask-start', (event) => {
   console.log('Subtask started:', event.subtaskHistoryId)
 })
+```
+
+> [!TIP]
+> Use the event system for debugging, logging, and monitoring your prai workflows in production.
+
+### Console Logger
+
+```typescript showLineNumbers
+import { consoleLogger, History } from 'prai'
+
+const history = new History()
+
+// Built-in console logger
+consoleLogger(history)
+```
+
+### Redis Logger
+
+You can use the Redis logger to persist history events to a Redis stream for monitoring and debugging:
+
+```typescript showLineNumbers
+import { History } from 'prai'
+import { redisLogger } from 'prai-redis'
+import { createClient } from 'redis'
+
+const history = new History()
+
+const client = createClient({ url: process.env.REDIS_URL })
+await client.connect()
+await redisLogger(history, { streamName: 'stream-name', client })
 ```
 
 ## Cost Tracking

@@ -1,5 +1,8 @@
-import { consoleLogger, gemini, History, Model, step, buildSimplePrice, openai, groq } from 'prai'
+import { History, Model, step, buildSimplePrice, groq } from 'prai'
 import { z } from 'zod'
+import { redisLogger } from 'prai-redis'
+import { createClient } from 'redis'
+import { setTimeout } from 'node:timers/promises'
 
 // 1. Inputs for our theme generation process
 const brandName = `pmndrs`
@@ -30,7 +33,9 @@ const model = new Model({
 
 // 4. create a chat history
 const history = new History()
-consoleLogger(history)
+const client = createClient({ url: process.env.REDIS_URL })
+await client.connect()
+await redisLogger(history, { streamName: 'stream-name', client })
 
 // 5. First step
 const adjectives = await step(
@@ -142,6 +147,10 @@ function formatThemeAsCss(theme: typeof result): string {
 
 // Log the theme in CSS format
 console.log(formatThemeAsCss(result))
+
+setTimeout(500)
+
+await client.disconnect()
 
 console.log(`Overall Costs: ${history.getCost()}$`)
 
