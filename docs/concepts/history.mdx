@@ -225,10 +225,6 @@ history.addEventListener('step-response', (event) => {
   console.log('Step completed:', event.historyId)
 })
 
-history.addEventListener('step-error', (event) => {
-  console.error('Step failed:', event.error)
-})
-
 history.addEventListener('data-reference-added', (event) => {
   console.log('Data added to history')
 })

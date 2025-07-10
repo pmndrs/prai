@@ -151,17 +151,6 @@ export function consoleLogger(history: History, options?: { abort?: AbortSignal 
   )
 
   history.addEventListener(
-    'step-error',
-    (event) => {
-      logHeader(event.historyId, 'Step Error', Date.now(), colors.error)
-      console.error('  Error:')
-      console.log('  ' + colors.error(event.error))
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
-
-  history.addEventListener(
     'subtask-start',
     (event) => {
       logHeader(event.historyId, 'Subtask Started', Date.now(), colors.info)

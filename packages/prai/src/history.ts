@@ -69,7 +69,6 @@ export type BuildReference = () => string
 export type EventMap = {
   'step-request': StepRequestEvent
   'step-response': StepResponseEvent
-  'step-error': StepErrorEvent
   'subtask-start': SubtaskStartEvent
   'data-reference-added': DataReferenceAddedEvent
   'subtask-response-referenced': SubtaskReponseReferencedEvent
@@ -85,12 +84,6 @@ export type StepResponseEvent = {
   type: 'step-response'
   historyId: string
   message: Message
-}
-
-export type StepErrorEvent = {
-  type: 'step-error'
-  historyId: string
-  error: string
 }
 
 export type SubtaskStartEvent = {
@@ -139,9 +132,6 @@ export class History {
   private cost: number | undefined = 0
 
   getCost() {
-    if (this.currentlyExecutingStepId != null) {
-      throw new Error('unable to compute the costs while still executing a step')
-    }
     return this.cost
   }
 
@@ -219,11 +209,6 @@ export class History {
     this.messages.push(message)
     this.dispatchEvent('step-request', { type: 'step-request', historyId: this.id, message })
     return stepId
-  }
-
-  onStepError(error: any) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    this.dispatchEvent('step-error', { type: 'step-error', historyId: this.id, error: errorMessage })
   }
 
   /**

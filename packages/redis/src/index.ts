@@ -78,16 +78,6 @@ export async function redisLogger(history: History, options: RedisLoggerOptions)
   )
 
   history.addEventListener(
-    'step-error',
-    (event) => {
-      addStreamEntry('step-error', event.historyId, {
-        error: event.error,
-      })
-    },
-    { signal: abortSignal },
-  )
-
-  history.addEventListener(
     'subtask-start',
     (event) => {
       addStreamEntry('subtask-start', event.historyId, {
