@@ -23,7 +23,7 @@ export type RedisLoggerOptions = {
   abort?: AbortSignal
 }
 
-export async function redisLogger(history: History, options: RedisLoggerOptions): Promise<void> {
+export async function redisLogger(histories: History | Array<History>, options: RedisLoggerOptions): Promise<void> {
   const { streamName, streamTTL, client, abort: abortSignal } = options
 
   // Helper to safely serialize messages
@@ -54,60 +54,64 @@ export async function redisLogger(history: History, options: RedisLoggerOptions)
     }
   }
 
-  // Register event listeners matching the console logger
-  history.addEventListener(
-    'step-request',
-    async (event) => {
-      addStreamEntry('step-request', event.historyId, {
-        messageRole: event.message.role,
-        messageContent: serializeMessageContent(event.message.content),
-      })
-    },
-    { signal: abortSignal },
-  )
+  histories = Array.isArray(histories) ? histories : [histories]
 
-  history.addEventListener(
-    'step-response',
-    (event) => {
-      addStreamEntry('step-response', event.historyId, {
-        messageRole: event.message.role,
-        messageContent: serializeMessageContent(event.message.content),
-      })
-    },
-    { signal: abortSignal },
-  )
+  for (const history of histories) {
+    // Register event listeners matching the console logger
+    history.addEventListener(
+      'step-request',
+      async (event) => {
+        addStreamEntry('step-request', event.historyId, {
+          messageRole: event.message.role,
+          messageContent: serializeMessageContent(event.message.content),
+        })
+      },
+      { signal: abortSignal },
+    )
 
-  history.addEventListener(
-    'subtask-start',
-    (event) => {
-      addStreamEntry('subtask-start', event.historyId, {
-        subtaskHistoryId: event.subtaskHistoryId,
-      })
-    },
-    { signal: abortSignal },
-  )
+    history.addEventListener(
+      'step-response',
+      (event) => {
+        addStreamEntry('step-response', event.historyId, {
+          messageRole: event.message.role,
+          messageContent: serializeMessageContent(event.message.content),
+        })
+      },
+      { signal: abortSignal },
+    )
 
-  history.addEventListener(
-    'data-reference-added',
-    (event) => {
-      addStreamEntry('data-reference-added', event.historyId, {
-        messageRole: event.message.role,
-        messageContent: serializeMessageContent(event.message.content),
-      })
-    },
-    { signal: abortSignal },
-  )
+    history.addEventListener(
+      'subtask-start',
+      (event) => {
+        addStreamEntry('subtask-start', event.historyId, {
+          subtaskHistoryId: event.subtaskHistoryId,
+        })
+      },
+      { signal: abortSignal },
+    )
 
-  history.addEventListener(
-    'subtask-response-referenced',
-    (event) => {
-      addStreamEntry('subtask-response-referenced', event.historyId, {
-        requestMessageRole: event.requestMessage.role,
-        requestMessageContent: serializeMessageContent(event.requestMessage.content),
-        reponseMessageRole: event.responseMessage.role,
-        reponseMessageContent: serializeMessageContent(event.responseMessage.content),
-      })
-    },
-    { signal: abortSignal },
-  )
+    history.addEventListener(
+      'data-reference-added',
+      (event) => {
+        addStreamEntry('data-reference-added', event.historyId, {
+          messageRole: event.message.role,
+          messageContent: serializeMessageContent(event.message.content),
+        })
+      },
+      { signal: abortSignal },
+    )
+
+    history.addEventListener(
+      'subtask-response-referenced',
+      (event) => {
+        addStreamEntry('subtask-response-referenced', event.historyId, {
+          requestMessageRole: event.requestMessage.role,
+          requestMessageContent: serializeMessageContent(event.requestMessage.content),
+          reponseMessageRole: event.responseMessage.role,
+          reponseMessageContent: serializeMessageContent(event.responseMessage.content),
+        })
+      },
+      { signal: abortSignal },
+    )
+  }
 }
