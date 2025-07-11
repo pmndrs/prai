@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import { History } from './history.js'
 
-export function consoleLogger(history: History, options?: { abort?: AbortSignal }): void {
+export function consoleLogger(histories: History | Array<History>, options?: { abort?: AbortSignal }): void {
   const abortSignal = options?.abort
   const initialTime = Date.now()
 
@@ -128,60 +128,64 @@ export function consoleLogger(history: History, options?: { abort?: AbortSignal 
   // Always start with a separator for the first event
   logSeparator()
 
-  history.addEventListener(
-    'step-request',
-    (event) => {
-      logHeader(event.historyId, 'Step Request', Date.now(), colors.info)
-      console.log('  Message:')
-      console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
+  histories = Array.isArray(histories) ? histories : [histories]
 
-  history.addEventListener(
-    'step-response',
-    (event) => {
-      logHeader(event.historyId, 'Step Response', Date.now(), colors.success)
-      console.log('  Message:')
-      console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
+  for (const history of histories) {
+    history.addEventListener(
+      'step-request',
+      (event) => {
+        logHeader(event.historyId, 'Step Request', Date.now(), colors.info)
+        console.log('  Message:')
+        console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
+        logSeparator()
+      },
+      { signal: abortSignal },
+    )
 
-  history.addEventListener(
-    'subtask-start',
-    (event) => {
-      logHeader(event.historyId, 'Subtask Started', Date.now(), colors.info)
-      console.log('  Subtask History ID:')
-      console.log('  ' + formatId(event.subtaskHistoryId))
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
+    history.addEventListener(
+      'step-response',
+      (event) => {
+        logHeader(event.historyId, 'Step Response', Date.now(), colors.success)
+        console.log('  Message:')
+        console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
+        logSeparator()
+      },
+      { signal: abortSignal },
+    )
 
-  history.addEventListener(
-    'data-reference-added',
-    (event) => {
-      logHeader(event.historyId, 'Data Added', Date.now(), colors.info)
-      console.log('  Message:')
-      console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
+    history.addEventListener(
+      'subtask-start',
+      (event) => {
+        logHeader(event.historyId, 'Subtask Started', Date.now(), colors.info)
+        console.log('  Subtask History ID:')
+        console.log('  ' + formatId(event.subtaskHistoryId))
+        logSeparator()
+      },
+      { signal: abortSignal },
+    )
 
-  history.addEventListener(
-    'subtask-response-referenced',
-    (event) => {
-      logHeader(event.historyId, 'Subtask Response Referenced', Date.now(), colors.success)
-      console.log('  Request Message:')
-      console.log('  ' + formatMessages([event.requestMessage]).replace(/\n/g, '\n  '))
-      console.log('  Response Message:')
-      console.log('  ' + formatMessages([event.responseMessage]).replace(/\n/g, '\n  '))
-      logSeparator()
-    },
-    { signal: abortSignal },
-  )
+    history.addEventListener(
+      'data-reference-added',
+      (event) => {
+        logHeader(event.historyId, 'Data Added', Date.now(), colors.info)
+        console.log('  Message:')
+        console.log('  ' + formatMessages([event.message]).replace(/\n/g, '\n  '))
+        logSeparator()
+      },
+      { signal: abortSignal },
+    )
+
+    history.addEventListener(
+      'subtask-response-referenced',
+      (event) => {
+        logHeader(event.historyId, 'Subtask Response Referenced', Date.now(), colors.success)
+        console.log('  Request Message:')
+        console.log('  ' + formatMessages([event.requestMessage]).replace(/\n/g, '\n  '))
+        console.log('  Response Message:')
+        console.log('  ' + formatMessages([event.responseMessage]).replace(/\n/g, '\n  '))
+        logSeparator()
+      },
+      { signal: abortSignal },
+    )
+  }
 }
