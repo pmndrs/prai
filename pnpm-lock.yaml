@@ -81,12 +81,12 @@ importers:
       '@dotenvx/dotenvx':
         specifier: ^1.44.1
         version: 1.44.1
-      'prai-redis':
-        specifier: workspace:^
-        version: link:../../packages/redis
       prai:
         specifier: workspace:^
         version: link:../../packages/prai
+      prai-redis:
+        specifier: workspace:^
+        version: link:../../packages/redis
       redis:
         specifier: ^5.5.6
         version: 5.5.6
@@ -99,12 +99,6 @@ importers:
 
   packages/prai:
     dependencies:
-      '@biomejs/js-api':
-        specifier: ^0.7.1
-        version: 0.7.1(@biomejs/wasm-nodejs@1.9.4)
-      '@biomejs/wasm-nodejs':
-        specifier: ^1.9.4
-        version: 1.9.4
       '@google/genai':
         specifier: ^1.4.0
         version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)
@@ -237,23 +231,6 @@ packages:
   '@babel/types@7.26.10':
     resolution: {integrity: sha512-emqcG3vHrpxUKTrxcblR36dcrcoRDvKmnL/dCL6ZsHaShW80qxCAcNhzQZrpeM765VzEos+xOi4s+r4IXzTwdQ==}
     engines: {node: '>=6.9.0'}
-
-  '@biomejs/js-api@0.7.1':
-    resolution: {integrity: sha512-VFdgFFZWcyCQxZcAasyv8Enpexn4CblMdWmr6izLYHTLcbd+z9x/LuKU71qnmClABfnYqZjiY7c8DKTVri3Ajw==}
-    peerDependencies:
-      '@biomejs/wasm-bundler': ^1.9.2
-      '@biomejs/wasm-nodejs': ^1.9.2
-      '@biomejs/wasm-web': ^1.9.2
-    peerDependenciesMeta:
-      '@biomejs/wasm-bundler':
-        optional: true
-      '@biomejs/wasm-nodejs':
-        optional: true
-      '@biomejs/wasm-web':
-        optional: true
-
-  '@biomejs/wasm-nodejs@1.9.4':
-    resolution: {integrity: sha512-ZqNlhKcZW6MW1LxWIOfh9YVrBykvzyFad3bOh6JJFraDnNa3NXboRDiaI8dmrbb0ZHXCU1Tsq6WQsKV2Vpp5dw==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2844,12 +2821,6 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
-
-  '@biomejs/js-api@0.7.1(@biomejs/wasm-nodejs@1.9.4)':
-    optionalDependencies:
-      '@biomejs/wasm-nodejs': 1.9.4
-
-  '@biomejs/wasm-nodejs@1.9.4': {}
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
