@@ -118,6 +118,8 @@ export type HistoryState = {
   usedSchemas: Set<Schema>
 }
 
+export const base64UrlPrefix = 'data:image/jpeg;base64,'
+
 export class History {
   public readonly id = crypto.randomUUID()
   private readonly subscriptionMap = new Map<string, Set<(data: any) => void>>()
@@ -326,7 +328,7 @@ export class History {
           content.push({ type: 'input_audio', input_audio: { data: toBase64(value), format: fileType } })
           break
         case 'image':
-          content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${toBase64(value)}` } })
+          content.push({ type: 'image_url', image_url: { url: `${base64UrlPrefix}${toBase64(value)}` } })
           break
         case 'data':
           content.push({ type: 'text', text: JSON.stringify(value) })

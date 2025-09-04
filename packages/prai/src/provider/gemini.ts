@@ -3,6 +3,7 @@ import { Provider } from '../model.js'
 import { buildJsonSchema } from '../schema/json.js'
 import { Schema, ZodString } from 'zod'
 import { Message } from '../step.js'
+import { base64UrlPrefix } from '../history.js'
 
 function buildAdditionalConfig(schema: Schema): GenerateContentConfig {
   if (schema instanceof ZodString) {
@@ -79,7 +80,12 @@ export function gemini(
 function messageContentToPartUnion(content: Message['content'][number]): Part {
   switch (content.type) {
     case 'image_url':
-      return { fileData: { fileUri: content.image_url.url, mimeType: 'image/jpeg' } }
+      return {
+        inlineData: {
+          data: content.image_url.url.slice(base64UrlPrefix.length),
+          mimeType: `image/jpeg`,
+        },
+      }
     case 'input_audio':
       return {
         inlineData: {
