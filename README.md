@@ -103,3 +103,8 @@ Explore the complete **prai** documentation to learn everything from basic conce
 - **[Models](https://pmndrs.github.io/prai/concepts/modeltypescript)** - AI provider abstraction supporting OpenAI, Groq, Gemini, and mock providers
 - **[History](https://pmndrs.github.io/prai/concepts/historytypescript)** - Conversation tracking, reference system, subtasks, and multimodal support
 
+
+TODO:
+
+[ ] write model to log
+[ ] allow overriding response and cost field through step options 
