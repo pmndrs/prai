@@ -79,7 +79,7 @@ export function gemini(
 function messageContentToPartUnion(content: Message['content'][number]): Part {
   switch (content.type) {
     case 'image_url':
-      return { fileData: { fileUri: content.image_url.url, mimeType: 'image/png' } }
+      return { fileData: { fileUri: content.image_url.url, mimeType: 'image/jpeg' } }
     case 'input_audio':
       return {
         inlineData: {

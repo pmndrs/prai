@@ -326,7 +326,7 @@ export class History {
           content.push({ type: 'input_audio', input_audio: { data: toBase64(value), format: fileType } })
           break
         case 'image':
-          content.push({ type: 'image_url', image_url: { url: `data:image/${fileType};base64,${toBase64(value)}` } })
+          content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${toBase64(value)}` } })
           break
         case 'data':
           content.push({ type: 'text', text: JSON.stringify(value) })
