@@ -94,14 +94,14 @@ Explore the complete **prai** documentation to learn everything from basic conce
 ### Getting Started
 - **[Introduction](https://pmndrs.github.io/prai/getting-started/introduction)** - Overview of prai concepts and core philosophy
 - **[Your First Workflow](https://pmndrs.github.io/prai/getting-started/first-workflow)** - Step-by-step tutorial building a complete brand theme generator
-- **[Special Step Types](https://pmndrs.github.io/prai/getting-started/special-step-typestypescript)** - Specialized functions for data processing (`mapStep`, `filterStep`, `combineStep`, etc.)
-- **[Advanced Usage](https://pmndrs.github.io/prai/getting-started/advanced-usagetypescript)** - Streaming responses, conditional workflows, model fallbacks, and testing strategies
-- **[Best Practices](https://pmndrs.github.io/prai/getting-started/best-practicestypescript)** - Production guidelines and optimization tips
+- **[Special Step Types](https://pmndrs.github.io/prai/getting-started/special-step-types)** - Specialized functions for data processing (`mapStep`, `filterStep`, `combineStep`, etc.)
+- **[Advanced Usage](https://pmndrs.github.io/prai/getting-started/advanced-usage)** - Streaming responses, conditional workflows, model fallbacks, and testing strategies
+- **[Best Practices](https://pmndrs.github.io/prai/getting-started/best-practices)** - Production guidelines and optimization tips
 
 ### Core Concepts
-- **[Steps](https://pmndrs.github.io/prai/concepts/steptypescript)** - Fundamental building blocks of prai workflows with schema integration and examples
-- **[Models](https://pmndrs.github.io/prai/concepts/modeltypescript)** - AI provider abstraction supporting OpenAI, Groq, Gemini, and mock providers
-- **[History](https://pmndrs.github.io/prai/concepts/historytypescript)** - Conversation tracking, reference system, subtasks, and multimodal support
+- **[Steps](https://pmndrs.github.io/prai/concepts/step)** - Fundamental building blocks of prai workflows with schema integration and examples
+- **[Models](https://pmndrs.github.io/prai/concepts/model)** - AI provider abstraction supporting OpenAI, Groq, Gemini, and mock providers
+- **[History](https://pmndrs.github.io/prai/concepts/history)** - Conversation tracking, reference system, subtasks, and multimodal support
 
 
 TODO:
