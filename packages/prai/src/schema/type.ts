@@ -6,28 +6,30 @@ import {
   ZodIntersection,
   ZodLazy,
   ZodLiteral,
-  ZodNumber,
-  ZodObject,
   ZodNullable,
-  ZodString,
+  ZodObject,
   ZodUnion,
 } from 'zod'
-import { flattenIntersections } from './utils.js'
-import { SchemaVisitor } from './visitor.js'
-import { ReusedSchemaVisitor } from './reused.js'
-import { Biome, Distribution } from '@biomejs/js-api'
 
-const biome = await Biome.create({
-  distribution: Distribution.NODE,
-})
-biome.applyConfiguration({
-  javascript: {
-    formatter: {
-      semicolons: 'asNeeded',
-      indentWidth: 1,
-    },
-  },
-})
+import { ReusedSchemaVisitor } from './reused.js'
+import { SchemaVisitor } from './visitor.js'
+import { flattenIntersections } from './utils.js'
+
+function formatTypeScript(code: string): string {
+  return code
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed === '') return ''
+      // Remove semicolons at end of lines (semicolons: 'asNeeded')
+      const withoutSemi = trimmed.endsWith(';') ? trimmed.slice(0, -1) : trimmed
+      // Use single space indentation (indentWidth: 1)
+      const indent = ' '.repeat(Math.max(0, line.length - line.trimStart().length))
+      return indent + withoutSemi
+    })
+    .join('\n')
+    .trim()
+}
 
 export interface SchemaTypeOptions {
   /** Used schemas set for sharing across multiple calls */
@@ -202,5 +204,5 @@ export function buildSchemaType(
 
   // Combine type definitions with main type
   const allDefinitions = [...typeVisitor.typeDefinitions, mainType]
-  return biome.formatContent(allDefinitions.join('\n'), { filePath: 'example.ts' }).content
+  return formatTypeScript(allDefinitions.join('\n'))
 }
